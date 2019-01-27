@@ -1,0 +1,14 @@
+
+<!-- <input class="ng-hide" [attr.id]="id" type="file" /> -->
+<!-- <label [attr.for]="id" class="md-button md-raised md-primary">{{label}}</label> -->
+<div>
+  <span class="file-heading">{{heading}}</span>
+  <div class="ui-inputgroup pointer" (click)="openFileDialog()" [pTooltip]="filename" tooltipPosition="bottom">
+    <input class="filename-container pointer" type="text" pInputText [disabled]="true" [(ngModel)]="filename"/>
+    <button pButton type="button" icon="pi pi-folder-open" iconPos="left" (click)="openFileDialog()"></button>
+  </div>
+  <div class="p-grid" *ngIf="fileStat">
+      <div class="p-col"><em>Last Modified {{fileStat.modified | date:'medium'}}</em></div>
+      <div class="p-col"><em>Size {{fileStat.size}}</em></div>
+    </div>
+</div>

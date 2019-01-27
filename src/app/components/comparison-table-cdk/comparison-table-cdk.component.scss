@@ -1,0 +1,69 @@
+.diff-table {
+  .options-row {
+    margin: 5px 0px;
+  }
+
+  .grid-container {
+
+
+    .grid-container-col {
+      overflow-x: scroll;
+      overflow-y: scroll;
+      margin: 0px 5px
+    }
+
+  }
+
+
+  .cdk-table {
+    border-style: solid;
+    border-width: thin;
+    border-spacing: 0;
+
+    .cdk-header-row {
+      height: 56px;
+    }
+
+    .cdk-row {
+      height: 40px;
+    }
+
+    .cdk-cell, .cdk-footer-cell, .cdk-header-cell {
+      padding: 0;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+    }
+
+    .cdk-column-_-_ {
+      min-width: 4rem;
+      background-color: #F7F7F9;
+      text-align: center;
+      line-height: 2.5rem;
+      vertical-align: middle;
+    }
+
+  }
+
+  .diff {
+    .match {
+      // could be green or white (or let user choose?)
+    }
+
+    .mismatch-add {
+      // could use in future
+    }
+    .mismatch-remove {
+      // could use in future
+    }
+
+    .mismatch {
+      background-color: #fdb8c0 !important;
+    }
+  }
+
+  .mismatch-column {
+    background-color: #fee8e9;
+    border-color: #e9aeae
+  }
+
+}

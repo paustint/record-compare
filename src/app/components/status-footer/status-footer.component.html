@@ -1,0 +1,32 @@
+<div>
+  <div class="loading-container mx-2">
+    <p-progressSpinner *ngIf="loading" [style]="{width: '25px', height: '25px'}" animationDuration="1s"></p-progressSpinner>
+  </div>
+  <div *ngIf="tableDiffMetadata">
+    <span class="status-label font-weight-bold">Differences:</span>
+    <span class="status-item mx-1">
+      Total:
+        <span class="font-weight-bold" [ngClass]="{'text-danger': tableDiffMetadata.diffCount > 0, 'text-success': tableDiffMetadata.diffCount === 0}">
+          {{tableDiffMetadata.diffCount}}
+        </span>
+    </span>
+    <span class="status-item mx-1">
+      Rows:
+        <span class="font-weight-bold" [ngClass]="{'text-danger': tableDiffMetadata.rowDiffCount > 0, 'text-success': tableDiffMetadata.rowDiffCount === 0}">
+          {{tableDiffMetadata.rowDiffCount}}
+        </span>
+    </span>
+    <span class="status-item mx-1">
+      Columns:
+        <span class="font-weight-bold" [ngClass]="{'text-danger': tableDiffMetadata.colDiffCount > 0, 'text-success': tableDiffMetadata.colDiffCount === 0}">
+          {{tableDiffMetadata.colDiffCount}}
+        </span>
+    </span>
+    <span class="status-item mx-1">
+      Cells:
+        <span class="font-weight-bold" [ngClass]="{'text-danger': tableDiffMetadata.cellDiffCount > 0, 'text-success': tableDiffMetadata.cellDiffCount === 0}">
+          {{tableDiffMetadata.cellDiffCount}}
+        </span>
+    </span>
+  </div>
+</div>
