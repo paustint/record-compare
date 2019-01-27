@@ -1,0 +1,22 @@
+<p-fieldset>
+  <p-header>
+    <i class="pi pi-cog"></i>
+    Comparison Configuration
+  </p-header>
+  <span class="mr-2">
+    <app-compare-settings-key
+      [leftHeaders]="leftHeaders"
+      [rightHeaders]="rightHeaders"
+      [disabled]="disabled || type !== 'table'"
+      (save)="onSaveKeys($event)"
+    ></app-compare-settings-key>
+  </span>
+  <span class="mr-2">
+    <app-compare-settings-mapping
+      [leftHeaders]="leftHeaders"
+      [rightHeaders]="rightHeaders"
+      [disabled]="disabled || type !== 'table'"
+      (save)="onSaveMapping($event)"
+    ></app-compare-settings-mapping>
+  </span>
+</p-fieldset>

@@ -1,0 +1,34 @@
+<button
+  pButton
+  type="button"
+  class=""
+  label="Configure Mapping"
+  icon="pi pi-sitemap"
+  iconPos="right"
+  [disabled]="disabled"
+  (click)="active = true"
+></button>
+
+<p-dialog
+  header="Map columns to compare"
+  [(visible)]="active"
+  [modal]="true"
+  [responsive]="true"
+  [blockScroll]="true"
+  [style]="{width: '350px', minWidth: '200px'}"
+  [minY]="70"
+  [maximizable]="true"
+  [baseZIndex]="10000"
+>
+  <div>
+    Default is only to use left data to match to right data with exact matching column names
+    Show two columns of auto-mapped fields
+    allow user to drag and delete a row
+    Maybe we need 4 columns (left data, left mapping, right mapping, right data)?
+  </div>
+
+  <p-footer>
+      <button type="button" pButton icon="pi pi-times" (click)="onClose()" label="Cancel" class="ui-button-secondary"></button>
+      <button type="button" pButton icon="pi pi-check" (click)="onSave('key')" label="Save"></button>
+  </p-footer>
+</p-dialog>

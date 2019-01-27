@@ -1,0 +1,56 @@
+<button
+  pButton
+  type="button"
+  class=""
+  label="Set Key"
+  icon="pi pi-key"
+  iconPos="right"
+  [disabled]="disabled"
+  (click)="onActive()"
+></button>
+
+
+<p-dialog
+  header="Select field to match records"
+  [(visible)]="active"
+  [modal]="true"
+  [responsive]="true"
+  [blockScroll]="true"
+  [style]="{width: '500px', minWidth: '350px'}"
+  [minY]="70"
+  [maximizable]="true"
+  [baseZIndex]="10000"
+>
+  <div>
+    <div class="settings-information">
+      <p>Choose the field(s) that will be used to match rows from each file.</p>
+      <p><small>
+        <i class="pi pi-info-circle"></i>
+        Only fields that exist in both files are shown below
+      </small></p>
+    </div>
+    <div class="py-2">
+      <strong>Selected:</strong> {{ getSelectedText() }}
+    </div>
+    <p-listbox
+      [options]="headers"
+      [(ngModel)]="selectedHeaders"
+      multiple="multiple"
+      checkbox="checkbox"
+      [filter]="true"
+      [showToggleAll]="false"
+      (onChange)="onChange()"
+      [style]="{width: '100%'}"
+    >
+      <p-header>
+        <i class="pi pi-key"></i>
+        Select Keys
+      </p-header>
+    </p-listbox>
+  </div>
+
+  <p-footer>
+    <button type="button" pButton icon="pi pi-times" (click)="onClose()" label="Cancel" class="ui-button-secondary"></button>
+    <button type="button" pButton icon="pi pi-check" (click)="onSave('key')" label="Save"></button>
+  </p-footer>
+</p-dialog>

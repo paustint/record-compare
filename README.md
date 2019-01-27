@@ -9,8 +9,16 @@
     - [ ] We need to figure out the interaction for these
 
 - APP
-- [ ] When matching rows, we will want to keep the order and add in spaces (empty rows) on the left or right based on if there are matches later on (e.x. keep matches next to eachother no matter what, but also retain order)
+  - [ ] When matching rows, we will want to keep the order and add in spaces (empty rows) on the left or right based on if there are matches later on (e.x. keep matches next to eachother no matter what, but also retain order)
   - [ ] We might need to store a map of items, or maybe we can do it on the fly when we sort
+- FILE UPLOAD
+  - [ ] Allow dragging and dropping a file
+  - [ ] Show loading indicator while parsing a large file
+  - [ ] Disable file input while a file is being loaded/parsed
+  - [ ] Filesize should be in friendly units
+  - [ ] If there is an error parsing or reading the file, the user does no know about it.
+    - [ ] Ex. make a CSV where data extends beyond the columns
+  - [ ] Show how many rows or lines in the file exist (depending on type of file)
 - [ ] TABLE
   - [ ] FILTERS
     - [ ] Add filters to only show some data (checkboxes)
@@ -34,13 +42,18 @@
       - [ ] Allow the user to sort data
       - [ ] Allow user to hide columns
       - [ ] Allow user to filter on any given column (maybe even allow text input)
+    - [ ] NO RESULTS
+      - [ ] IF there are no results to compare, then we should tell the user this instead of showing a blank screen
   - [ ] STYLING
     - [ ] Better table styling - let's look hip!
+    - [ ] Add padding on cells
+    - [ ] possibly add orders to make data more tabular looking
 - [ ] COMPARISON
-  - [ ] Add support for XLSX table comparison
+  - [x] Add support for XLSX table comparison
   - [ ] Allow comparing any two text files
   - [ ] Allow user to paste in text to compare (If CSV data, then )
   - [ ] Allow user to compare any content from two web resources (as text)
+  - [ ] Handle duplicate keys and show user results or some error or something (TABLE COMPARE)
 - [ ] ERROR HANDLING
   - [ ] Figure out a pattern / UI for handling errors
 - [ ] NOTIFICATIONS

@@ -5,6 +5,23 @@ export type CompareType = 'text' | 'table';
 export type FileType = 'csv' | 'xlsx' | 'text';
 export type MatchType = 'add' | 'remove';
 
+export interface CompareSettings {
+  keys: string[];
+  mapping: {
+    [source: string]: string;
+  };
+}
+
+export interface CompareButton {
+  name: CompareType;
+  label: string;
+  class?: string;
+  disabled: boolean;
+  icon?: string;
+  iconPos?: string;
+  action: Function;
+}
+
 export interface FileStat {
   size: number;
   created: Date;

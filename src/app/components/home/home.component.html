@@ -10,12 +10,12 @@
       </div>
 
       <!-- File Uploader -->
-      <div class="p-col">
+      <div class="p-col file-container">
         <div class="p-grid">
-          <div class="p-col">
+          <div class="p-col py-0">
               <app-file-loader heading="Source" (fileContents)="onFileContents('left', $event)"></app-file-loader>
           </div>
-          <div class="p-col">
+          <div class="p-col py-0">
               <app-file-loader heading="Target" (fileContents)="onFileContents('right', $event)"></app-file-loader>
           </div>
         </div>
@@ -24,11 +24,33 @@
 
   <!-- Main Content -->
   <div class="content" #content>
-    <div *ngIf="left && right">
-        <button pButton type="button" label="Compare Text" (click)="onClickCompare('text')"></button>
-        <button pButton type="button" label="Compare CSV" (click)="onClickCompare('table')"></button>
 
-        <div *ngIf="compareActive &&  compareType === 'text'">
+      <div class="p-grid">
+          <div class="p-col-fixed settings">
+              <app-compare-settings
+                [leftHeaders]="left?.headers"
+                [rightHeaders]="right?.headers"
+                [disabled]="!left || !right"
+                [type]="compareType"
+                (settingsChanged)="onSettingsChanged($event)"
+              ></app-compare-settings>
+          </div>
+          <div class="p-col mt-auto pb-3">
+              <app-compare-buttons
+                [allDisabled]="disableButtons.all"
+                [textDisabled]="disableButtons.text"
+                [tableDisabled]="disableButtons.table"
+                (compare)="onCompare($event)"
+              ></app-compare-buttons>
+          </div>
+      </div>
+
+
+
+
+
+    <div *ngIf="left && right">
+        <div *ngIf="compareActive && compareType === 'text'">
             <app-compare-text [left]="left.raw" [right]="right.raw"></app-compare-text>
         </div>
         <div *ngIf="compareActive && compareType === 'table'">

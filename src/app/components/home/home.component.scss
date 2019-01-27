@@ -15,4 +15,14 @@
     flex: 0 1 40px;
   }
 
+  .file-container {
+    max-height: 90px;
+    min-height: 90px;
+    overflow: hidden;
+  }
+
+  .settings {
+    // width: 400px;
+  }
+
 }

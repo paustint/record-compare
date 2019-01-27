@@ -1,0 +1,15 @@
+
+<div>
+  <span class="compare-button-container" *ngFor="let btn of buttons">
+      <button
+        pButton
+        type="button"
+        [class]="btn.class"
+        [label]="btn.label"
+        [icon]="btn.icon"
+        [iconPos]="btn.iconPos"
+        [disabled]="allDisabled || btn.disabled"
+        (click)="btn.action(btn.name)"
+      ></button>
+  </span>
+</div>
