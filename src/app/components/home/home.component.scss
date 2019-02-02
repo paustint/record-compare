@@ -13,6 +13,9 @@
 
   .footer {
     flex: 0 1 40px;
+    min-height: 50px;
+    max-height: 50px;
+    height: 50px;
   }
 
   .file-container {

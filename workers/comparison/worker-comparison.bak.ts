@@ -1,7 +1,112 @@
+// tslint:disable:no-console
+import * as XLSX from 'xlsx';
+import { parse } from 'papaparse';
+import * as fs from 'fs-extra';
+import { FileType, FileContentsResponse, FileContentsEvent, FileContentsTable } from '../worker-models';
 import * as DiffMatchPatch from 'diff-match-patch';
 import * as _ from 'lodash';
-import { MatchRows, KeyMap, MatchType, ColMetadata, CompareTableOptions } from '../models';
-import { CHAR_TO_PIXEL_RATIO } from '../constants';
+import { CompareTableOptions, MatchRows, MatchRowsWithData, ColMetadata, MatchType, KeyMap } from '../../src/app/models';
+import { CHAR_TO_PIXEL_RATIO } from '../../src/app/constants';
+
+const FILETYPE_REGEX = {
+  CSV: /\.csv$/i,
+  XLSX: /\.(xls|xlsx)$/i,
+};
+
+export async function parseAndCompare(
+  leftFileData: FileContentsEvent,
+  rightFileData: FileContentsEvent,
+  options: CompareTableOptions
+): Promise<MatchRows> {
+  try {
+    console.time('parse both files');
+    const left = (await parseFile(leftFileData)) as FileContentsTable;
+    const right = (await parseFile(rightFileData)) as FileContentsTable;
+    console.timeEnd('parse both files');
+    try {
+      console.time('compare table data');
+      const results = compareTableData(left.data, right.data, options);
+      console.timeEnd('compare table data');
+
+      return {
+        diffMetadata: results.diffMetadata,
+        matchedRows: results.matchedRows,
+        duplicateLeftKeys: results.duplicateLeftKeys,
+        duplicateRightKeys: results.duplicateRightKeys,
+        leftIndexToKeyMap: results.leftIndexToKeyMap,
+        rightIndexToKeyMap: results.rightIndexToKeyMap,
+        rowsWithNoKey: results.rowsWithNoKey,
+        colMetadata: results.colMetadata,
+      };
+    } catch (ex) {
+      console.log('Error comparing files', ex);
+      throw new Error('Error comparing files');
+    }
+  } catch (ex) {
+    console.log('Error parsing files', ex);
+    throw new Error('Error parsing files');
+  }
+}
+
+export async function parseFile(fileData: FileContentsEvent): Promise<FileContentsResponse> {
+  try {
+    const { type, filename } = fileData;
+    let fileContents: string | Buffer;
+
+    console.time('read file');
+    if (type === 'csv') {
+      fileContents = await fs.readFile(filename, 'utf-8');
+    } else if (type === 'xlsx') {
+      fileContents = await fs.readFile(filename);
+    } else {
+      fileContents = await fs.readFile(filename, 'utf-8');
+    }
+    console.timeEnd('read file');
+
+    if (type === 'csv') {
+      // CSV
+      console.time('parse csv');
+      const parseResults = parse(fileContents as string, { skipEmptyLines: true, header: true });
+      console.timeEnd('parse csv');
+
+      if (parseResults.errors.length > 0) {
+        console.log('Errors parsing file', parseResults.errors);
+      } else {
+        console.log(parseResults.data);
+        return {
+          type: 'csv',
+          headers: parseResults.meta.fields,
+          data: parseResults.data,
+        };
+      }
+    } else if (type === 'xlsx') {
+      // XLSX
+      console.time('parse xlsx');
+      const workbook = XLSX.read(fileContents, { type: 'buffer' });
+      console.timeEnd('parse xlsx');
+
+      console.time('convert xlsx to json');
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
+      const headers = Object.keys(data[0]);
+      console.timeEnd('convert xlsx to json');
+
+      return {
+        type: 'xlsx',
+        headers,
+        data,
+      };
+    } else {
+      // TEXT
+      return {
+        type: 'text',
+        data: fileContents as string,
+      };
+    }
+  } catch (ex) {
+    console.log('Error reading file', ex);
+  }
+}
 
 /**
  * For a given tabular data
@@ -11,6 +116,7 @@ import { CHAR_TO_PIXEL_RATIO } from '../constants';
  * @param right
  */
 export function compareTableData(left: any[], right: any[], options: CompareTableOptions): MatchRows {
+  console.log('compareTableData()');
   // tslint:disable-next-line:prefer-const
   let { keyFields, keyIgnoreCase, fieldsToCompare } = options;
   const matchedRows = matchRows(keyFields, left, right, keyIgnoreCase);
@@ -176,7 +282,7 @@ function getMaxStringLength(item1?: string, item2?: string): number {
  * @param right
  */
 function matchRows(keyField: string, left: any[], right: any[], ignoreCase: boolean): MatchRows {
-  const matchedRows: MatchRows = {
+  const matchedRows: MatchRowsWithData = {
     diffMetadata: {
       diffCount: 0,
       rowDiffCount: 0,

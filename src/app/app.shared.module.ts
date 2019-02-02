@@ -20,6 +20,7 @@ import { ContainerDirective } from './directives/container.directive';
 import { HeaderCellSizeDirective } from './directives/header-cell-size.directive';
 import { WebviewDirective } from './directives/webview.directive';
 import { SafeHtmlPipe } from './pipes/safe-html.pipe';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 /**
  * This component imports items (modules/directives/pipes)
@@ -48,6 +49,7 @@ import { SafeHtmlPipe } from './pipes/safe-html.pipe';
     FieldsetModule,
     DialogModule,
     ListboxModule,
+    MultiSelectModule,
   ],
   exports: [
     CommonModule,
@@ -71,6 +73,7 @@ import { SafeHtmlPipe } from './pipes/safe-html.pipe';
     ContainerDirective,
     SafeHtmlPipe,
     ListboxModule,
+    MultiSelectModule,
   ],
 })
 export class AppSharedModule {}

@@ -1,15 +1,20 @@
 
-<div>
-  <span class="compare-button-container" *ngFor="let btn of buttons">
-      <button
-        pButton
-        type="button"
-        [class]="btn.class"
-        [label]="btn.label"
-        [icon]="btn.icon"
-        [iconPos]="btn.iconPos"
-        [disabled]="allDisabled || btn.disabled"
-        (click)="btn.action(btn.name)"
-      ></button>
-  </span>
-</div>
+<p-fieldset>
+    <p-header>
+      Run Comparison
+    </p-header>
+    <div class="p-grid pb-1">
+      <div class="p-col-fixed mr-2 p-0" *ngFor="let btn of buttons">
+          <button
+            pButton
+            type="button"
+            [class]="btn.class"
+            [label]="btn.label"
+            [icon]="btn.icon"
+            [iconPos]="btn.iconPos"
+            [disabled]="allDisabled || btn.disabled"
+            (click)="btn.action(btn.name)"
+          ></button>
+      </div>
+    </div>
+</p-fieldset>

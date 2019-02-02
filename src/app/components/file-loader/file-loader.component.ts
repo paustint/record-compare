@@ -15,8 +15,6 @@ import { AppService } from '../../providers/app.service';
 export class FileLoaderComponent implements OnInit {
   @Input() heading = 'Source File';
   @Output() fileContents = new EventEmitter<FileContentsEvent>();
-  // TODO:
-  // @Output() fileReadError = new EventEmitter<FileContentsEvent>();
 
   filename: string;
   fileStat: FileStat | undefined;
@@ -33,8 +31,8 @@ export class FileLoaderComponent implements OnInit {
       this.filename = filePath[0];
       this.appService.loading = true;
       try {
-        await this.parseFile(this.filename);
         await this.getFileStats(this.filename);
+        await this.parseFile(this.filename);
       } catch (ex) {
         console.error('error reading file', ex);
       } finally {
@@ -49,32 +47,54 @@ export class FileLoaderComponent implements OnInit {
       if (FILETYPE_REGEX.CSV.test(filename)) {
         // CSV
         this.type = 'csv';
-
-        const fileContents = await this.electronService.fs.readFile(filename, 'utf-8');
-        const parseResults = parse(fileContents, { skipEmptyLines: true, header: true });
-        if (parseResults.errors.length > 0) {
-          this.log.debug('Errors parsing file', parseResults.errors);
-        } else {
-          this.log.debug(parseResults.data);
-          this.fileContents.emit({ parsed: parseResults.data, raw: fileContents, headers: parseResults.meta.fields, type: 'csv' });
-        }
+        parse(this.electronService.fs.createReadStream(filename, 'utf-8'), {
+          preview: 1,
+          header: true,
+          skipEmptyLines: true,
+          step: row => {
+            this.log.debug('CSV parsed row');
+            this.fileContents.emit({
+              type: 'csv',
+              fileStat: this.fileStat,
+              filename,
+              headers: row.meta.fields,
+            });
+          },
+          error: error => {
+            this.log.debug('Errors parsing file', error);
+          },
+          complete: () => {
+            // never called if preview is set
+          },
+        });
       } else if (FILETYPE_REGEX.XLSX.test(filename)) {
         // XLSX
         this.type = 'xlsx';
-
+        this.log.time('read xlsx');
         const fileContents = await this.electronService.fs.readFile(filename);
-        const workbook = XLSX.read(fileContents, { type: 'buffer' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const parsed = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
-        const headers = Object.keys(parsed[0]);
+        const workbook = XLSX.read(fileContents, { type: 'buffer', sheetRows: 2, cellFormula: false, cellHTML: false });
+        this.log.timeEnd('read xlsx');
 
-        this.fileContents.emit({ parsed, headers, type: 'xlsx' });
+        this.log.time('parse xlsx');
+        const parsed = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '', raw: true });
+        const headers = Object.keys(parsed[0]);
+        this.log.timeEnd('parse xlsx');
+
+        this.fileContents.emit({
+          type: 'xlsx',
+          fileStat: this.fileStat,
+          filename,
+          headers,
+        });
       } else {
         // TEXT
         this.type = 'text';
 
-        const fileContents = await this.electronService.fs.readFile(filename, 'utf-8');
-        this.fileContents.emit({ raw: fileContents, type: 'text' });
+        this.fileContents.emit({
+          type: 'text',
+          fileStat: this.fileStat,
+          filename,
+        });
       }
     } catch (ex) {
       this.log.debug('Error reading file', ex);

@@ -39,6 +39,10 @@ export class CompareSettingsKeyComponent implements OnInit {
 
   setHeaders() {
     this.headers = this.keyService.mapHeadersToSelectedItem(this._leftHeaders, this._rightHeaders);
+    // reset selected headers if content changes
+    this.selectedHeaders = [];
+    this.keyService.selectedKeys = this.selectedHeaders;
+    this.save.emit({ keys: this.keyService.selectedKeys });
     this.keyService.setDisabledItems(this.headers, this.selectedHeaders);
   }
 

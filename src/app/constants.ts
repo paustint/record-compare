@@ -6,3 +6,10 @@ export const FILETYPE_REGEX = {
 };
 
 export const NOOP = () => {};
+
+export const IPC_EVENT_NAMES = {
+  GET_WINDOW_IDS: 'GET_WINDOW_IDS',
+  GET_PATH: 'GET_PATH',
+  WORKER_MESSAGE_EV: 'WORKER_MESSAGE',
+  WORKER_RESPONSE_EV: 'WORKER_RESPONSE',
+};

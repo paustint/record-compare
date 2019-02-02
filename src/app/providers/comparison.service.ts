@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 // import { requireTaskPool } from 'electron-remote';
-import { MatchRows } from '../models';
-import { compareTableDate } from '../utils/comparison.util';
+import { MatchRows, CompareTableOptions } from '../models';
+import { compareTableData } from '../utils/comparison.util';
 
 @Injectable({
   providedIn: 'root',
@@ -9,9 +9,9 @@ import { compareTableDate } from '../utils/comparison.util';
 export class ComparisonService {
   constructor() {}
 
-  async compareTableData(keyField: string, fieldsToCompare: string[], left: any[], right: any[]) {
+  async compareTableData(left: any[], right: any[], options: CompareTableOptions) {
     // const x = requireTaskPool(require.resolve('../../../workers/compare-text.ts'));
-    const results: MatchRows = await compareTableDate(keyField, fieldsToCompare, left, right);
+    const results: MatchRows = await compareTableData(left, right, options);
     console.log('results', results);
     return results;
   }

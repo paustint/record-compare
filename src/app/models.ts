@@ -1,13 +1,37 @@
 import { SafeHtml } from '@angular/platform-browser';
 
+export type WorkerEventName = 'TEST' | 'COMPARE_TABLE';
+
+export interface WorkerEvent<T> {
+  name: WorkerEventName;
+  payload: T;
+}
+
+export interface WorkerEventCompare {
+  filename: string;
+}
+
 export type LeftRight = 'left' | 'right';
 export type CompareType = 'text' | 'table';
 export type FileType = 'csv' | 'xlsx' | 'text';
 export type MatchType = 'add' | 'remove';
+export type OtherCompareTypes = 'adkeyIgnoreCased' | 'compareIgnoreCase';
 
 export interface CompareSettings {
   keys: string[];
   mapping: {
+    [source: string]: string;
+  };
+  keyIgnoreCase: boolean;
+  compareIgnoreCase: boolean;
+}
+
+export interface CompareTableOptions {
+  keyFields: string; // TODO: allow array
+  keyIgnoreCase?: boolean;
+  compareIgnoreCase?: boolean;
+  fieldsToCompare: string[]; // FIXME: wil be replaced with mapping
+  mapping?: {
     [source: string]: string;
   };
 }
@@ -30,22 +54,23 @@ export interface FileStat {
 
 export type FileContentsEvent = FileContentsEventCsv | FileContentsEventXlsx | FileContentsEventText;
 
-export interface FileContentsEventCsv {
+export interface FileContentsEventBase {
+  type: 'csv' | 'xlsx' | 'text';
+  filename: string;
+  fileStat: FileStat;
+}
+export interface FileContentsEventCsv extends FileContentsEventBase {
   type: 'csv';
-  raw: string;
-  parsed: any[];
   headers: string[];
 }
 
-export interface FileContentsEventXlsx {
+export interface FileContentsEventXlsx extends FileContentsEventBase {
   type: 'xlsx';
-  parsed: any[];
   headers: string[];
 }
 
-export interface FileContentsEventText {
+export interface FileContentsEventText extends FileContentsEventBase {
   type: 'text';
-  raw: string;
 }
 
 export interface RowAndIndex {
@@ -76,10 +101,13 @@ export interface DiffMetadata {
   colsWithDiff: Set<String>;
 }
 
-export interface MatchRows {
-  diffMetadata: DiffMetadata;
+export interface LeftRightData {
   left: any[];
   right: any[];
+}
+
+export interface MatchRows {
+  diffMetadata: DiffMetadata;
   matchedRows: {
     [key: string]: MatchRowsItem;
   };
@@ -100,6 +128,8 @@ export interface MatchRows {
   /** Used to know how wide to set a given column */
   colMetadata: ColMetadata;
 }
+
+export type MatchRowsWithData = MatchRows & LeftRightData;
 
 export interface MatchRowsLeftItem {
   leftIndex?: number;

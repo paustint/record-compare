@@ -1,7 +1,7 @@
 <!-- FOO -->
-<div class="container">
+<div class="container" #container>
 
-  <div class="header">
+  <div class="header" #header>
     <!-- Top Menu -->
       <div class="p-grid p-dir-col">
         <div class="p-col">
@@ -25,7 +25,7 @@
   <!-- Main Content -->
   <div class="content" #content>
 
-      <div class="p-grid">
+      <div class="p-grid" #contentConfig>
           <div class="p-col-fixed settings">
               <app-compare-settings
                 [leftHeaders]="left?.headers"
@@ -35,7 +35,7 @@
                 (settingsChanged)="onSettingsChanged($event)"
               ></app-compare-settings>
           </div>
-          <div class="p-col mt-auto pb-3">
+          <div class="p-col-fixed mt-auto mb-3">
               <app-compare-buttons
                 [allDisabled]="disableButtons.all"
                 [textDisabled]="disableButtons.text"
@@ -53,7 +53,7 @@
         <div *ngIf="compareActive && compareType === 'text'">
             <app-compare-text [left]="left.raw" [right]="right.raw"></app-compare-text>
         </div>
-        <div *ngIf="compareActive && compareType === 'table'">
+        <div *ngIf="compareActive && matchedRows && compareType === 'table'">
             <!-- <app-comparison-table
               [headers]="left.headers"
               [data]="matchedRows"
@@ -68,7 +68,7 @@
   </div>
 
   <!-- footer -->
-  <div class="footer">
+  <div class="footer" #footer>
     <app-status-footer [tableDiffMetadata]="tableDiffMetadata"></app-status-footer>
   </div>
 

@@ -3,20 +3,35 @@
     <i class="pi pi-cog"></i>
     Comparison Configuration
   </p-header>
-  <span class="mr-2">
-    <app-compare-settings-key
-      [leftHeaders]="leftHeaders"
-      [rightHeaders]="rightHeaders"
-      [disabled]="disabled || type !== 'table'"
-      (save)="onSaveKeys($event)"
-    ></app-compare-settings-key>
-  </span>
-  <span class="mr-2">
-    <app-compare-settings-mapping
-      [leftHeaders]="leftHeaders"
-      [rightHeaders]="rightHeaders"
-      [disabled]="disabled || type !== 'table'"
-      (save)="onSaveMapping($event)"
-    ></app-compare-settings-mapping>
-  </span>
+  <div class="p-grid">
+    <div class="p-col-fixed mr-2 p-0">
+      <app-compare-settings-key
+        [leftHeaders]="leftHeaders"
+        [rightHeaders]="rightHeaders"
+        [disabled]="disabled || type !== 'table'"
+        (save)="onSaveKeys($event)"
+      ></app-compare-settings-key>
+    </div>
+    <div class="p-col-fixed mr-2 p-0">
+      <app-compare-settings-mapping
+        [leftHeaders]="leftHeaders"
+        [rightHeaders]="rightHeaders"
+        [disabled]="disabled || type !== 'table'"
+        (save)="onSaveMapping($event)"
+      ></app-compare-settings-mapping>
+    </div>
+    <div class="p-col-fixed mr-2 p-0">
+      <p-multiSelect
+        [options]="otherSettings"
+        [(ngModel)]="selectedOtherSettings"
+        [filter]="false"
+        [displaySelectedLabel]="false"
+        defaultLabel="Other Options"
+        [showHeader]="false"
+        [disabled]="disabled"
+        (onChange)="onOtherSettingsChanged($event)"
+      >
+      </p-multiSelect>
+    </div>
+  </div>
 </p-fieldset>

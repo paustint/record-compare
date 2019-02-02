@@ -21,6 +21,29 @@ html, body {
   cursor: pointer;
 }
 
+.max-25vh {
+  max-height: 25vh;
+}
+
+.max-25vw {
+  max-width: 25vw;
+}
+
+.max-50vh {
+  max-height: 50vh;
+}
+
+.max-50vw {
+  max-width: 50vw;
+}
+
+.max-75vh {
+  max-height: 75vh;
+}
+
+.max-75vw {
+  max-width: 75vw;
+}
 
 .text-lowercase {
   text-transform: lowercase !important;

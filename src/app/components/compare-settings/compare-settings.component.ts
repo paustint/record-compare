@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CompareType, CompareSettings } from '../../models';
+import { CompareType, CompareSettings, OtherCompareTypes } from '../../models';
+import { SelectItem } from 'primeng/api';
 
 @Component({
   selector: 'app-compare-settings',
@@ -19,9 +20,18 @@ export class CompareSettingsComponent implements OnInit {
     mapping: false,
   };
 
+  otherSettings: SelectItem[] = [
+    { label: 'Case-Insensitive Key', value: 'keyIgnoreCase' },
+    // TODO: enable in future
+    // { label: 'Case-Insensitive Comparison', value: 'compareIgnoreCase' },
+  ];
+  selectedOtherSettings: string[] = [];
+
   settings: CompareSettings = {
     keys: [],
     mapping: {},
+    keyIgnoreCase: false,
+    compareIgnoreCase: false,
   };
 
   constructor() {}
@@ -46,8 +56,15 @@ export class CompareSettingsComponent implements OnInit {
     this.settings.keys = data.keys;
     this.settingsChanged.emit(this.settings);
   }
+
   onSaveMapping(data: { mapping: { [source: string]: string } }) {
     this.settings.mapping = data.mapping;
+    this.settingsChanged.emit(this.settings);
+  }
+
+  onOtherSettingsChanged(value: OtherCompareTypes) {
+    this.settings.keyIgnoreCase = this.selectedOtherSettings.find(val => val === 'keyIgnoreCase') ? true : false;
+    this.settings.compareIgnoreCase = this.selectedOtherSettings.find(val => val === 'compareIgnoreCase') ? true : false;
     this.settingsChanged.emit(this.settings);
   }
 }

@@ -7,6 +7,9 @@
 - BUGS
   - [ ] IF a user loads a new file and clicks compare, we do compare but the UI does not update.
     - [ ] We need to figure out the interaction for these
+  - [ ] Reset settings after file is changed (e.x. mapping and key)
+  - [ ] Modals may extend beyond page
+  - [ ] 
 
 - APP
   - [ ] When matching rows, we will want to keep the order and add in spaces (empty rows) on the left or right based on if there are matches later on (e.x. keep matches next to eachother no matter what, but also retain order)
@@ -54,6 +57,7 @@
   - [ ] Allow user to paste in text to compare (If CSV data, then )
   - [ ] Allow user to compare any content from two web resources (as text)
   - [ ] Handle duplicate keys and show user results or some error or something (TABLE COMPARE)
+  - [ ] Allow case-insensitive matching (either for keys or for all data)
 - [ ] ERROR HANDLING
   - [ ] Figure out a pattern / UI for handling errors
 - [ ] NOTIFICATIONS

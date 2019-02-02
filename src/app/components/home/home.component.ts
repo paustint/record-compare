@@ -1,10 +1,18 @@
-import { Component, OnInit, ViewChild, HostListener, ElementRef, AfterViewInit } from '@angular/core';
-import { FileContentsEvent, MatchRows, CompareType, LeftRight, DiffMetadata, CompareSettings } from '../../models';
-import { Observable, Subject } from 'rxjs';
-import { DiffContent } from 'ngx-text-diff/lib/ngx-text-diff.model';
+import { Component, OnInit, ViewChild, HostListener, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import {
+  FileContentsEvent,
+  MatchRows,
+  CompareType,
+  LeftRight,
+  DiffMetadata,
+  CompareSettings,
+  WorkerEvent,
+  WorkerEventCompare,
+} from '../../models';
 import { ComparisonService } from '../../providers/comparison.service';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
+import { ElectronService } from '../../providers/electron.service';
 
 @Component({
   selector: 'app-home',
@@ -13,6 +21,9 @@ import { AppService } from '../../providers/app.service';
 })
 export class HomeComponent implements OnInit, AfterViewInit {
   _content: ElementRef<HTMLDivElement>;
+  @ViewChild('header') header: ElementRef<HTMLDivElement>;
+  @ViewChild('footer') footer: ElementRef<HTMLDivElement>;
+  @ViewChild('contentConfig') contentConfig: ElementRef<HTMLDivElement>;
   @ViewChild('content')
   get content() {
     return this._content;
@@ -42,7 +53,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
     table: true,
   };
 
-  constructor(private comparison: ComparisonService, private log: LogService, private appService: AppService) {}
+  constructor(
+    private electron: ElectronService,
+    private comparison: ComparisonService,
+    private log: LogService,
+    private appService: AppService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.appService.loading$.subscribe(loading => {
@@ -56,6 +73,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.updateDisabledButtons();
       }
     });
+
+    this.electron.workerEvents$.subscribe(results => {
+      console.log('[TEST] EVENT', results);
+    });
   }
 
   ngAfterViewInit() {
@@ -68,6 +89,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   onFileContents(which: LeftRight, contents: FileContentsEvent) {
+    this.log.debug('onFileContents', which, contents);
     if (which === 'left') {
       this.left = contents;
     } else {
@@ -87,22 +109,101 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   async onCompare(compareType: CompareType) {
+    // this.compareUsingRenderer(compareType);
+    // this.compareUsingWorkerIPC(compareType);
+    this.compareUsingWorkerBinary(compareType);
+  }
+
+  // async compareUsingRenderer(compareType: CompareType) {
+  //   this.appService.loading = true;
+  //   this.compareType = compareType;
+  //   this.compareActive = true;
+  //   if (compareType === 'table') {
+  //     if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
+  //       // TODO: fix key field! (allow user input)
+  //       // TODO: fix fields to compare! (allow user input)
+  //       this.log.time('compareData');
+  //       this.matchedRows = await this.comparison.compareTableData(this.left.parsed, this.right.parsed, {
+  //         keyFields: this.settings.keys[0],
+  //         fieldsToCompare: this.left.headers,
+  //         keyIgnoreCase: this.settings.keyIgnoreCase,
+  //       });
+  //       this.tableDiffMetadata = this.matchedRows.diffMetadata;
+  //       this.log.timeEnd('compareData');
+  //     } else {
+  //       // TODO: data is in incompatible format (e.x. text vs table)
+  //     }
+  //   } else {
+  //     // TODO: store text variables somewhere
+  //     // can use ngTextDiff
+  //   }
+  //   this.appService.loading = false;
+  // }
+
+  async compareUsingWorkerBinary(compareType: CompareType) {
     this.appService.loading = true;
     this.compareType = compareType;
-    this.compareActive = true;
     if (compareType === 'table') {
       if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
-        // TODO: fix key field! (allow user input)
-        // TODO: fix fields to compare! (allow user input)
-        this.log.time('compareData');
-        this.matchedRows = await this.comparison.compareTableData(
-          this.settings.keys[0],
-          this.left.headers,
-          this.left.parsed,
-          this.right.parsed
+        this.log.time('compare data');
+        // const fileName = this.electron.path.join(this.electron.tempPath, 'record-compare.tempfile.json');
+        // this.log.debug('temp fileName', fileName);
+        // await this.electron.fs.writeJSON(fileName, {
+        //   left: this.left.parsed,
+        //   right: this.right.parsed,
+        //   options: {
+        //     keyFields: this.settings.keys[0],
+        //     fieldsToCompare: this.left.headers,
+        //     keyIgnoreCase: this.settings.keyIgnoreCase,
+        //   },
+        // });
+
+        const writeStream = this.electron.binaryClient.send(
+          JSON.stringify({
+            name: 'COMPARE_TABLE',
+            payload: {
+              left: this.left,
+              right: this.right,
+              options: {
+                keyFields: this.settings.keys[0],
+                fieldsToCompare: this.left.headers,
+                keyIgnoreCase: this.settings.keyIgnoreCase,
+              },
+            },
+          })
         );
-        this.tableDiffMetadata = this.matchedRows.diffMetadata;
-        this.log.timeEnd('compareData');
+
+        writeStream.end();
+
+        this.electron.binaryClient.on('stream', readStream => {
+          let parts = '';
+          let results: WorkerEvent<WorkerEventCompare>;
+          readStream.on('data', data => {
+            console.log('client:stream:data');
+            parts += data;
+          });
+          readStream.on('end', async () => {
+            console.log('client:stream:end', parts);
+            results = JSON.parse(parts);
+            this.matchedRows = await this.electron.fs.readJSON(results.payload.filename);
+            // this.matchedRows = results.payload;
+            // this.tableDiffMetadata = this.matchedRows.diffMetadata; // commenting out to test performance
+            // this.compareActive = true;
+            this.appService.loading = false;
+            this.log.timeEnd('compare data');
+            this.cd.detectChanges();
+          });
+        });
+
+        // const sub = this.electron.workerEvents$.pipe(filter(ev => ev.name === 'COMPARE_TABLE')).subscribe(results => {
+        //   this.matchedRows = results.payload;
+        //   this.tableDiffMetadata = this.matchedRows.diffMetadata;
+        //   this.compareActive = true;
+        //   this.appService.loading = false;
+        //   this.log.timeEnd('compareData');
+        //   sub.unsubscribe();
+        //   this.cd.detectChanges();
+        // });
       } else {
         // TODO: data is in incompatible format (e.x. text vs table)
       }
@@ -110,8 +211,41 @@ export class HomeComponent implements OnInit, AfterViewInit {
       // TODO: store text variables somewhere
       // can use ngTextDiff
     }
-    this.appService.loading = false;
   }
+
+  // async compareUsingWorkerIPC(compareType: CompareType) {
+  //   this.appService.loading = true;
+  //   this.compareType = compareType;
+  //   if (compareType === 'table') {
+  //     if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
+  //       this.log.time('compareData');
+  //       this.electron.sendEventToWorker('COMPARE_TABLE', {
+  //         left: this.left.parsed,
+  //         right: this.right.parsed,
+  //         options: {
+  //           keyFields: this.settings.keys[0],
+  //           fieldsToCompare: this.left.headers,
+  //           keyIgnoreCase: this.settings.keyIgnoreCase,
+  //         },
+  //       });
+
+  //       const sub = this.electron.workerEvents$.pipe(filter(ev => ev.name === 'COMPARE_TABLE')).subscribe(results => {
+  //         this.matchedRows = results.payload;
+  //         this.tableDiffMetadata = this.matchedRows.diffMetadata;
+  //         this.compareActive = true;
+  //         this.appService.loading = false;
+  //         this.log.timeEnd('compareData');
+  //         sub.unsubscribe();
+  //         this.cd.detectChanges();
+  //       });
+  //     } else {
+  //       // TODO: data is in incompatible format (e.x. text vs table)
+  //     }
+  //   } else {
+  //     // TODO: store text variables somewhere
+  //     // can use ngTextDiff
+  //   }
+  // }
 
   isTable() {
     if (this.left && this.right) {
@@ -123,26 +257,29 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   updateDisabledButtons(compareType?: CompareType): void {
-    if (!this.left || !this.right) {
-      this.disableButtons = {
-        all: true,
-        table: true,
-        text: true,
-      };
-    } else if (this.isTable()) {
-      const invalidSettings = !this.settings || !this.settings.keys || this.settings.keys.length === 0 ? true : false;
-      this.disableButtons = {
-        all: false,
-        table: invalidSettings,
-        text: false,
-      };
-    } else {
-      this.disableButtons = {
-        all: false,
-        table: true,
-        text: false,
-      };
-    }
+    // ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      if (!this.left || !this.right) {
+        this.disableButtons = {
+          all: true,
+          table: true,
+          text: true,
+        };
+      } else if (this.isTable()) {
+        const invalidSettings = !this.settings || !this.settings.keys || this.settings.keys.length === 0 ? true : false;
+        this.disableButtons = {
+          all: false,
+          table: invalidSettings,
+          text: false,
+        };
+      } else {
+        this.disableButtons = {
+          all: false,
+          table: true,
+          text: false,
+        };
+      }
+    });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -151,9 +288,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   calculateContentHeight() {
-    this.contentHeight = this.content.nativeElement.clientHeight - 100;
-    // setTimeout(() => {
-    //   this.contentHeight = this.content.nativeElement.clientHeight - 50;
-    // });
+    this.contentHeight =
+      window.innerHeight -
+      this.header.nativeElement.clientHeight -
+      this.footer.nativeElement.clientHeight -
+      this.contentConfig.nativeElement.clientHeight -
+      50;
   }
 }
