@@ -20,7 +20,8 @@ import { ComparisonTableCdkComponent } from './components/comparison-table-cdk/c
 import { StatusFooterComponent } from './components/status-footer/status-footer.component';
 import { CompareButtonsComponent } from './components/compare-buttons/compare-buttons.component';
 import { CompareSettingsModule } from './components/compare-settings/compare-settings.module';
-import { AppSharedModule } from './app.shared.module';
+import { AppSharedModule } from './shared/app.shared.module';
+import { CompareTableContainerComponent } from './components/compare-table-container/compare-table-container.component';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -37,6 +38,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ComparisonTableCdkComponent,
     StatusFooterComponent,
     CompareButtonsComponent,
+    CompareTableContainerComponent,
   ],
   imports: [
     AppSharedModule,

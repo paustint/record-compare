@@ -8,7 +8,7 @@
     <button pButton type="button" icon="pi pi-folder-open" iconPos="left" (click)="openFileDialog()"></button>
   </div>
   <div class="p-grid" *ngIf="fileStat">
-      <div class="p-col"><em>Last Modified {{fileStat.modified | date:'medium'}}</em></div>
-      <div class="p-col"><em>Size {{fileStat.size}}</em></div>
+      <div class="p-col"><em>Last Modified: {{fileStat.modified | date:'medium'}}</em></div>
+      <div class="p-col"><em>Size: {{prettySize}}</em></div>
     </div>
 </div>

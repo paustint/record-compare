@@ -21,7 +21,6 @@ const config: WorkerConfig = {
   eventMap: {
     TEST: testEvent,
     COMPARE_TABLE: compareTableData,
-    COMPARE_TABLE_TEMP_FILE: compareTableDataFromTempFile,
   },
 };
 
@@ -39,12 +38,33 @@ function sendRendererMessage(event: WorkerEvent) {
   ipcRenderer.sendTo(config.windowIds.renderWindowId, WORKER_RESPONSE_EV, event);
 }
 
-function getTempFilename(value: string, ext: string): string {
-  ext = ext.startsWith('.') ? ext : `.${ext}`;
-  const name = `-${value}-${String(moment().valueOf())}${ext}`;
-  const filename = join(config.tempPath, 'record-compare', name);
-  console.log('temp filename:', filename);
+export function getTempFolderName(): string {
+  const folderName = `compare-${String(moment().valueOf())}`;
+  const filename = join(config.tempPath, 'record-compare', folderName);
+  console.log('temp foldername:', filename);
+  fs.ensureDirSync(filename);
   return filename;
+}
+
+export function getTempFilename(options: { folder?: string; filenamePrefix: string; ext: string }): string {
+  // tslint:disable-next-line:prefer-const
+  let { folder, filenamePrefix, ext } = options;
+  ext = ext.startsWith('.') ? ext : `.${ext}`;
+  const name = `${filenamePrefix}-${String(moment().valueOf())}${ext}`;
+  if (folder) {
+    if (folder.startsWith(config.tempPath)) {
+      return join(folder, name);
+    } else {
+      return join(config.tempPath, 'record-compare', folder, name);
+    }
+  } else {
+    return join(config.tempPath, 'record-compare', name);
+  }
+}
+
+// FIXME: run at load
+function cleanTempFolder() {
+  // TODO: delete files older than some timeperiod
 }
 
 /**
@@ -58,34 +78,6 @@ function testEvent(name: WorkerEventName, payload: any) {
   });
 }
 
-/**
- * Compare two files with tabular format (csv or xlsx)
- */
-async function compareTableDataFromTempFile(name: WorkerEventName, payload: { fileName: string }, useWsStream: boolean = false) {
-  console.log('compareTableDataFromTempFile()');
-  const data = await fs.readJSON(payload.fileName);
-  console.log('finished reading temp file');
-  const { left, right, options } = data;
-  // TODO: Read and parse file here instead of having to pass here and back
-  const matchRows = comparison.compareTableData(left, right, options);
-  const fileName = join(config.tempPath, 'record-compare.matchRows.json');
-  await fs.writeJSON(fileName, matchRows);
-  if (useWsStream) {
-    const stream = binaryClient.send(
-      JSON.stringify({
-        name,
-        payload: { fileName },
-      })
-    );
-    stream.end();
-  } else {
-    sendRendererMessage({
-      name,
-      payload: { fileName },
-    });
-  }
-}
-
 async function compareTableData(
   name: WorkerEventName,
   payload: { left: FileContentsEvent; right: FileContentsEvent; options: CompareTableOptions },
@@ -93,27 +85,26 @@ async function compareTableData(
 ) {
   const { left, right, options } = payload;
   // TODO: Read and parse file here instead of having to pass here and back
-  const matchRows = await comparison.parseAndCompare(left, right, options);
+  const matchRowsOutput = await comparison.parseAndCompare(left, right, options);
   if (useWsStream) {
-    const filename = getTempFilename('matchRows', 'json');
-    await fs.writeJSON(filename, matchRows);
     const stream = binaryClient.send(
       JSON.stringify({
         name,
-        payload: { filename },
+        payload: matchRowsOutput,
       })
     );
     stream.end();
   } else {
     sendRendererMessage({
       name,
-      payload: matchRows,
+      payload: matchRowsOutput,
     });
   }
 }
 
 function startBinaryServer() {
   console.log('starting binary server');
+  fs.ensureDirSync(join(config.tempPath, 'record-compare'));
   // binaryServer = BinaryServer({ port: 9000, chunkSize: 9999999999 });
   binaryServer = BinaryServer({ port: 9000 });
 

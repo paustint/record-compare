@@ -16,11 +16,12 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ListboxModule } from 'primeng/listbox';
-import { ContainerDirective } from './directives/container.directive';
-import { HeaderCellSizeDirective } from './directives/header-cell-size.directive';
-import { WebviewDirective } from './directives/webview.directive';
-import { SafeHtmlPipe } from './pipes/safe-html.pipe';
+import { ContainerDirective } from '../directives/container.directive';
+import { HeaderCellSizeDirective } from '../directives/header-cell-size.directive';
+import { WebviewDirective } from '../directives/webview.directive';
+import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { PaginatorModule } from 'primeng/paginator';
 
 /**
  * This component imports items (modules/directives/pipes)
@@ -50,6 +51,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
     DialogModule,
     ListboxModule,
     MultiSelectModule,
+    PaginatorModule,
   ],
   exports: [
     CommonModule,
@@ -74,6 +76,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
     SafeHtmlPipe,
     ListboxModule,
     MultiSelectModule,
+    PaginatorModule,
   ],
 })
 export class AppSharedModule {}

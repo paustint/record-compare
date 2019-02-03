@@ -1,5 +1,11 @@
 import { SafeHtml } from '@angular/platform-browser';
 
+export interface Pagination {
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export type WorkerEventName = 'TEST' | 'COMPARE_TABLE';
 
 export interface WorkerEvent<T> {
@@ -7,15 +13,16 @@ export interface WorkerEvent<T> {
   payload: T;
 }
 
-export interface WorkerEventCompare {
-  filename: string;
-}
-
 export type LeftRight = 'left' | 'right';
 export type CompareType = 'text' | 'table';
 export type FileType = 'csv' | 'xlsx' | 'text';
 export type MatchType = 'add' | 'remove';
 export type OtherCompareTypes = 'adkeyIgnoreCased' | 'compareIgnoreCase';
+
+export interface ReadCsvFileChunk {
+  header: { start: number; end: number };
+  data: { start: number; end: number };
+}
 
 export interface CompareSettings {
   keys: string[];
@@ -73,6 +80,15 @@ export interface FileContentsEventText extends FileContentsEventBase {
   type: 'text';
 }
 
+export interface ComparisonRow {
+  hasDiffs: boolean;
+  key: string;
+  leftIndex: number;
+  rightIndex: number;
+  left: any;
+  right: any;
+}
+
 export interface RowAndIndex {
   index: number;
   row: number;
@@ -93,11 +109,19 @@ export interface ColMetadataItem {
 }
 
 export interface DiffMetadata {
+  leftRowCount: number;
+  rightRowCount: number;
+  matchedRowsCount: number;
+  leftDuplicateKeyCount: number;
+  rightDuplicateKeyCount: number;
+  leftRowsWithoutKeyCount: number;
+  rightRowsWithoutKeyCount: number;
+
   diffCount: number;
   rowDiffCount: number;
   colDiffCount: number;
   cellDiffCount: number;
-  rowsWithDiff: string[]; // tricky to get because there are two datasheets - we could store row num or key or some obj with deets
+  rowsWithDiff: string[]; // key
   colsWithDiff: Set<String>;
 }
 
@@ -106,27 +130,38 @@ export interface LeftRightData {
   right: any[];
 }
 
+export interface RowBytes {
+  isHeader?: boolean;
+  hasDiffs: boolean;
+  bytes: number;
+  start: number;
+  end?: number;
+}
+
+export interface MatchRowFiles {
+  folder: string;
+  comparison: string | null;
+  duplicateKeys: string | null;
+  rowsWithNoKeys: string | null;
+  bytesPerRow: string | null;
+}
+
 export interface MatchRows {
   diffMetadata: DiffMetadata;
   matchedRows: {
     [key: string]: MatchRowsItem;
   };
-  duplicateLeftKeys: {
-    [key: string]: RowAndIndex;
-  };
-  duplicateRightKeys: {
-    [key: string]: RowAndIndex;
-  };
-  leftIndexToKeyMap: {
-    [key: number]: string;
-  };
-  rightIndexToKeyMap: {
-    [key: number]: string;
-  };
   // FIXME: we don't know if the rows are left or right!
   rowsWithNoKey: Array<RowAndIndex>;
   /** Used to know how wide to set a given column */
   colMetadata: ColMetadata;
+  files: MatchRowFiles;
+}
+
+export interface MatchRowsOutput {
+  diffMetadata: DiffMetadata;
+  colMetadata: ColMetadata;
+  files: MatchRowFiles;
 }
 
 export type MatchRowsWithData = MatchRows & LeftRightData;
@@ -149,11 +184,15 @@ export interface MatchRowsItem extends MatchRowsLeftItem, MatchRowsRightItem {
     [key: string]: {
       diffs: [number, string][];
       maxLength: number;
-      content: {
-        left?: string | SafeHtml;
-        right?: string | SafeHtml;
-        hasDiff?: boolean;
-      };
     };
   };
 }
+
+export interface MatchRowsItemContent {
+  left: string | SafeHtml;
+  right: string | SafeHtml;
+  hasDiff: boolean;
+}
+
+// colMetadata
+// diffMetadata

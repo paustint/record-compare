@@ -1,23 +1,34 @@
 // tslint:disable:no-console
-import * as XLSX from 'xlsx';
-import { parse } from 'papaparse';
 import * as fs from 'fs-extra';
-import { FileType, FileContentsResponse, FileContentsEvent, FileContentsTable } from '../worker-models';
+import { FileContentsEvent, FileContentsTable } from '../worker-models';
 import * as DiffMatchPatch from 'diff-match-patch';
 import * as _ from 'lodash';
-import { CompareTableOptions, MatchRows, MatchRowsWithData, ColMetadata, MatchType, KeyMap } from '../../src/app/models';
+import {
+  CompareTableOptions,
+  MatchRows,
+  MatchRowsWithData,
+  ColMetadata,
+  KeyMap,
+  MatchRowsOutput,
+  RowBytes,
+  ComparisonRow,
+} from '../../src/app/models';
 import { CHAR_TO_PIXEL_RATIO } from '../../src/app/constants';
+import { getTempFilename, getTempFolderName } from '../worker';
+import { parseFile, writeContentToCsv, getDiffContent, getMaxStringLength, getValAsString } from '../worker-utils';
 
-const FILETYPE_REGEX = {
-  CSV: /\.csv$/i,
-  XLSX: /\.(xls|xlsx)$/i,
-};
-
+/**
+ * Give two tabular files (csv/xlsx), compare files
+ * Files will be saved to a temporary directory and limited data will be returned
+ * @param leftFileData
+ * @param rightFileData
+ * @param options
+ */
 export async function parseAndCompare(
   leftFileData: FileContentsEvent,
   rightFileData: FileContentsEvent,
   options: CompareTableOptions
-): Promise<MatchRows> {
+): Promise<MatchRowsOutput> {
   try {
     console.time('parse both files');
     const left = (await parseFile(leftFileData)) as FileContentsTable;
@@ -25,19 +36,19 @@ export async function parseAndCompare(
     console.timeEnd('parse both files');
     try {
       console.time('compare table data');
-      const results = compareTableData(left.data, right.data, options);
+      const bytesPerRow = [];
+      const results = compareTableData(left.data, right.data, options, bytesPerRow);
       console.timeEnd('compare table data');
 
-      return {
+      await fs.writeJSON(results.files.bytesPerRow, bytesPerRow);
+
+      const output: MatchRowsOutput = {
         diffMetadata: results.diffMetadata,
-        matchedRows: results.matchedRows,
-        duplicateLeftKeys: results.duplicateLeftKeys,
-        duplicateRightKeys: results.duplicateRightKeys,
-        leftIndexToKeyMap: results.leftIndexToKeyMap,
-        rightIndexToKeyMap: results.rightIndexToKeyMap,
-        rowsWithNoKey: results.rowsWithNoKey,
         colMetadata: results.colMetadata,
+        files: results.files,
       };
+      console.log('output', output);
+      return output;
     } catch (ex) {
       console.log('Error comparing files', ex);
       throw new Error('Error comparing files');
@@ -48,66 +59,6 @@ export async function parseAndCompare(
   }
 }
 
-export async function parseFile(fileData: FileContentsEvent): Promise<FileContentsResponse> {
-  try {
-    const { type, filename } = fileData;
-    let fileContents: string | Buffer;
-
-    console.time('read file');
-    if (type === 'csv') {
-      fileContents = await fs.readFile(filename, 'utf-8');
-    } else if (type === 'xlsx') {
-      fileContents = await fs.readFile(filename);
-    } else {
-      fileContents = await fs.readFile(filename, 'utf-8');
-    }
-    console.timeEnd('read file');
-
-    if (type === 'csv') {
-      // CSV
-      console.time('parse csv');
-      const parseResults = parse(fileContents as string, { skipEmptyLines: true, header: true });
-      console.timeEnd('parse csv');
-
-      if (parseResults.errors.length > 0) {
-        console.log('Errors parsing file', parseResults.errors);
-      } else {
-        console.log(parseResults.data);
-        return {
-          type: 'csv',
-          headers: parseResults.meta.fields,
-          data: parseResults.data,
-        };
-      }
-    } else if (type === 'xlsx') {
-      // XLSX
-      console.time('parse xlsx');
-      const workbook = XLSX.read(fileContents, { type: 'buffer' });
-      console.timeEnd('parse xlsx');
-
-      console.time('convert xlsx to json');
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
-      const headers = Object.keys(data[0]);
-      console.timeEnd('convert xlsx to json');
-
-      return {
-        type: 'xlsx',
-        headers,
-        data,
-      };
-    } else {
-      // TEXT
-      return {
-        type: 'text',
-        data: fileContents as string,
-      };
-    }
-  } catch (ex) {
-    console.log('Error reading file', ex);
-  }
-}
-
 /**
  * For a given tabular data
  * @param keyField
@@ -115,11 +66,24 @@ export async function parseFile(fileData: FileContentsEvent): Promise<FileConten
  * @param left
  * @param right
  */
-export function compareTableData(left: any[], right: any[], options: CompareTableOptions): MatchRows {
+function compareTableData(left: any[], right: any[], options: CompareTableOptions, bytesPerRow: RowBytes[]): MatchRows {
   console.log('compareTableData()');
+
   // tslint:disable-next-line:prefer-const
   let { keyFields, keyIgnoreCase, fieldsToCompare } = options;
   const matchedRows = matchRows(keyFields, left, right, keyIgnoreCase);
+
+  const csvFields = ['hasDiffs', 'key', 'leftIndex', 'rightIndex', 'left', 'right'];
+  const comparisonStream = fs.createWriteStream(matchedRows.files.comparison);
+  const headerBytes = writeContentToCsv(csvFields, csvFields, comparisonStream, true);
+  bytesPerRow.push({
+    hasDiffs: false,
+    isHeader: true,
+    bytes: headerBytes,
+    start: 0,
+    end: headerBytes - 1,
+  });
+
   // Initialize max col length
   matchedRows.colMetadata = fieldsToCompare.reduce((fieldMap: ColMetadata, field) => {
     fieldMap[field] = {
@@ -135,6 +99,15 @@ export function compareTableData(left: any[], right: any[], options: CompareTabl
     const item = matchedRows.matchedRows[key];
     // Initialize max col length based on header length, then it may grow based on what data exists
 
+    const csvRow: ComparisonRow = {
+      hasDiffs: false,
+      key,
+      leftIndex: item.leftIndex + 1,
+      rightIndex: item.rightIndex + 1,
+      left: {},
+      right: {},
+    };
+
     if (item.left && item.right) {
       // item.left and item.right both exist - run comparison
       fieldsToCompare.forEach(cellKey => {
@@ -145,11 +118,15 @@ export function compareTableData(left: any[], right: any[], options: CompareTabl
         item.comparison[cellKey] = {
           diffs,
           maxLength: getMaxStringLength(item.left[cellKey], item.right[cellKey]),
-          content: {},
         };
-        item.comparison[cellKey].content = getDiffContent(item.comparison[cellKey].diffs);
+        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+        // prepare CSV Row
+        csvRow.left[cellKey] = diffContent.left;
+        csvRow.right[cellKey] = diffContent.right;
+        csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
+
         // Keep track of the max length across all cell values
-        item.hasDiffs = item.hasDiffs || item.comparison[cellKey].content.hasDiff;
+        item.hasDiffs = item.hasDiffs || diffContent.hasDiff;
         matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
         matchedRows.colMetadata[cellKey].hasDiffs = matchedRows.colMetadata[cellKey].hasDiffs || item.hasDiffs;
 
@@ -170,9 +147,13 @@ export function compareTableData(left: any[], right: any[], options: CompareTabl
         item.comparison[cellKey] = {
           diffs: [[-1, item.left[cellKey]]],
           maxLength: getMaxStringLength(item.left[cellKey], ''),
-          content: {},
         };
-        item.comparison[cellKey].content = getDiffContent(item.comparison[cellKey].diffs);
+        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+
+        // prepare CSV Row
+        csvRow.left[cellKey] = diffContent.left;
+        csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
+
         // Keep track of the max length across all cell values
         matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
         matchedRows.colMetadata[cellKey].hasDiffs = true;
@@ -186,9 +167,14 @@ export function compareTableData(left: any[], right: any[], options: CompareTabl
         item.comparison[cellKey] = {
           diffs: [[1, item.right[cellKey]]],
           maxLength: getMaxStringLength('', item.right[cellKey]),
-          content: {},
         };
-        item.comparison[cellKey].content = getDiffContent(item.comparison[cellKey].diffs);
+
+        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+
+        // prepare CSV Row
+        csvRow.left[cellKey] = diffContent.left;
+        csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
+
         // Keep track of the max length across all cell values
         matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
         matchedRows.colMetadata[cellKey].hasDiffs = true;
@@ -202,75 +188,44 @@ export function compareTableData(left: any[], right: any[], options: CompareTabl
       matchedRows.diffMetadata.rowDiffCount++;
       matchedRows.diffMetadata.rowsWithDiff.push(key);
     }
+
+    const bytes = writeContentToCsv(
+      { ...csvRow, left: JSON.stringify(csvRow.left), right: JSON.stringify(csvRow.right) },
+      csvFields,
+      comparisonStream,
+      true
+    );
+
+    if (bytesPerRow.length === 0) {
+      bytesPerRow.push({
+        hasDiffs: item.hasDiffs,
+        isHeader: false,
+        bytes,
+        start: 0,
+        end: bytes,
+      });
+    } else {
+      const prevEntry = bytesPerRow[bytesPerRow.length - 1];
+      bytesPerRow.push({
+        hasDiffs: item.hasDiffs,
+        isHeader: false,
+        bytes,
+        start: prevEntry.end + 1,
+        end: prevEntry.end + bytes,
+      });
+    }
+
+    // remove item to clear up memory
+    matchedRows.matchedRows[key] = undefined;
   });
 
   // Convert length to pixels
   Object.values(matchedRows.colMetadata).forEach(val => (val.pixels = val.length * CHAR_TO_PIXEL_RATIO));
   matchedRows.diffMetadata.colDiffCount = matchedRows.diffMetadata.colsWithDiff.size;
 
+  comparisonStream.end();
+
   return matchedRows;
-}
-
-function getValAsString(val: any): string {
-  if (_.isString(val)) {
-    return val;
-  } else if (_.isNil(val) || _.isNaN(val)) {
-    return '';
-  } else if (_.isNumber(val)) {
-    return val.toString();
-  } else if (_.isBoolean(val)) {
-    return val ? 'TRUE' : 'FALSE';
-  } else {
-    return JSON.stringify(val);
-  }
-}
-
-function getDiffContent(diffs: [number, string][]) {
-  const output = {
-    left: '',
-    right: '',
-    hasDiff: false,
-  };
-  diffs.forEach(diff => {
-    switch (diff[0]) {
-      case -1:
-        output.left += getMisMatchSpan(diff[1], 'remove');
-        output.hasDiff = true;
-        break;
-      case 1:
-        output.right += getMisMatchSpan(diff[1], 'add');
-        output.hasDiff = true;
-        break;
-      default:
-        output.left += getMatchSpan(diff[1]);
-        output.right += getMatchSpan(diff[1]);
-        break;
-    }
-  });
-  return output;
-}
-
-function getMisMatchSpan(val: string, type: MatchType) {
-  return `<span class="diff mismatch mismatch-${type}">${val || ''}</span>`;
-}
-function getMatchSpan(val: string) {
-  return `<span class="diff match">${val || ''}</span>`;
-}
-
-function getMaxStringLength(item1?: string, item2?: string): number {
-  try {
-    if (!_.isString(item1) && !_.isString(item2)) {
-      return 0;
-    } else if (_.isString(item1) && _.isString(item2)) {
-      return Math.max(item1.length, item2.length);
-    } else if (_.isString(item1)) {
-      return item1.length;
-    } else {
-      return item2.length;
-    }
-  } catch (ex) {
-    return 0;
-  }
 }
 
 /**
@@ -282,8 +237,21 @@ function getMaxStringLength(item1?: string, item2?: string): number {
  * @param right
  */
 function matchRows(keyField: string, left: any[], right: any[], ignoreCase: boolean): MatchRows {
+  const fileHeaders = {
+    duplicateKeys: ['which', 'data'],
+    rowsWithNoKeys: ['which', 'index', 'data'],
+  };
+  const folder = getTempFolderName();
   const matchedRows: MatchRowsWithData = {
     diffMetadata: {
+      leftRowCount: left.length,
+      rightRowCount: right.length,
+      matchedRowsCount: 0,
+      leftDuplicateKeyCount: 0,
+      rightDuplicateKeyCount: 0,
+      leftRowsWithoutKeyCount: 0,
+      rightRowsWithoutKeyCount: 0,
+      matchedRows: 0,
       diffCount: 0,
       rowDiffCount: 0,
       colDiffCount: 0,
@@ -294,13 +262,19 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
     left,
     right,
     matchedRows: {},
-    duplicateLeftKeys: {},
-    duplicateRightKeys: {},
-    leftIndexToKeyMap: {},
-    rightIndexToKeyMap: {},
     rowsWithNoKey: [],
     colMetadata: {},
+    files: {
+      folder,
+      comparison: getTempFilename({ folder, filenamePrefix: 'compared-rows', ext: 'csv' }),
+      duplicateKeys: getTempFilename({ folder, filenamePrefix: 'duplicate-keys', ext: 'csv' }),
+      rowsWithNoKeys: getTempFilename({ folder, filenamePrefix: 'rows-with-no-keys', ext: 'csv' }),
+      bytesPerRow: getTempFilename({ folder, filenamePrefix: 'bytes-per-row', ext: 'json' }),
+    },
   };
+
+  let duplicateKeysStream: fs.WriteStream | undefined;
+  let rowsWithNoKeysStream: fs.WriteStream | undefined;
 
   const missingLeftIndexes = new Set<number>();
   const missingRightIndexes = new Set<number>();
@@ -314,7 +288,13 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
     if (!_.isNil(row[keyField]) && !_.isEmpty(row[keyField])) {
       const exists = (ignoreCase && rowMap[row[keyField].toLowerCase()]) || rowMap[row[keyField]] ? true : false;
       if (exists) {
-        matchedRows.duplicateLeftKeys[rowMap[row[keyField]]] = { row, index };
+        matchedRows.diffMetadata.leftDuplicateKeyCount++;
+        if (!duplicateKeysStream) {
+          duplicateKeysStream = fs.createWriteStream(matchedRows.files.duplicateKeys);
+          writeContentToCsv(fileHeaders.duplicateKeys, fileHeaders.duplicateKeys, duplicateKeysStream);
+        }
+        writeContentToCsv({ which: 'left', data: JSON.stringify(row[keyField]) }, fileHeaders.duplicateKeys, duplicateKeysStream);
+        // matchedRows.duplicateLeftKeys[row[keyField]] = rowMap[row[keyField]];
       } else {
         const value = ignoreCase ? row[keyField].toLowerCase() : row[keyField];
         rowMap[value] = { row, index };
@@ -334,7 +314,12 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
     if (!_.isNil(row[keyField])) {
       const exists = (ignoreCase && rowMap[row[keyField].toLowerCase()]) || rowMap[row[keyField]] ? true : false;
       if (exists) {
-        matchedRows.duplicateRightKeys[rowMap[row[keyField]]] = { row, index };
+        matchedRows.diffMetadata.rightDuplicateKeyCount++;
+        if (!duplicateKeysStream) {
+          duplicateKeysStream = fs.createWriteStream(matchedRows.files.duplicateKeys);
+          writeContentToCsv(fileHeaders.duplicateKeys, fileHeaders.duplicateKeys, duplicateKeysStream);
+        }
+        writeContentToCsv({ which: 'right', data: JSON.stringify(row[keyField]) }, fileHeaders.duplicateKeys, duplicateKeysStream);
       } else {
         const value = ignoreCase ? row[keyField].toLowerCase() : row[keyField];
         rowMap[value] = { row, index };
@@ -351,6 +336,7 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
    * Associate the left and right (if exists) rows and their indexes to matched rows
    */
   Object.keys(leftKeyMap).forEach(key => {
+    matchedRows.diffMetadata.matchedRowsCount++;
     if (!_.isUndefined(rightKeyMap[key])) {
       coveredRightKeys.add(key);
       matchedRows.matchedRows[key] = {
@@ -379,6 +365,7 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
   Object.keys(rightKeyMap)
     .filter(key => !coveredRightKeys.has(key))
     .forEach(key => {
+      matchedRows.diffMetadata.matchedRowsCount++;
       matchedRows.matchedRows[key] = {
         leftIndex: null,
         rightIndex: rightKeyMap[key].index,
@@ -392,19 +379,43 @@ function matchRows(keyField: string, left: any[], right: any[], ignoreCase: bool
   /**
    * Add rows that did not have a value in the key field
    */
-  missingLeftIndexes.forEach(missingIndex =>
-    matchedRows.rowsWithNoKey.push({
-      index: missingIndex,
-      row: left[missingIndex],
-    })
-  );
+  missingLeftIndexes.forEach(missingIndex => {
+    matchedRows.diffMetadata.leftRowsWithoutKeyCount++;
+    if (!rowsWithNoKeysStream) {
+      rowsWithNoKeysStream = fs.createWriteStream(matchedRows.files.rowsWithNoKeys);
+      writeContentToCsv(fileHeaders.rowsWithNoKeys, fileHeaders.rowsWithNoKeys, duplicateKeysStream);
+    }
+    writeContentToCsv(
+      { which: 'left', index: missingIndex, data: JSON.stringify(left[missingIndex]) },
+      fileHeaders.rowsWithNoKeys,
+      rowsWithNoKeysStream
+    );
+  });
 
-  missingRightIndexes.forEach(missingIndex =>
-    matchedRows.rowsWithNoKey.push({
-      index: missingIndex,
-      row: right[missingIndex],
-    })
-  );
+  missingRightIndexes.forEach(missingIndex => {
+    matchedRows.diffMetadata.rightRowsWithoutKeyCount++;
+    if (!rowsWithNoKeysStream) {
+      rowsWithNoKeysStream = fs.createWriteStream(matchedRows.files.rowsWithNoKeys);
+      writeContentToCsv(fileHeaders.rowsWithNoKeys, fileHeaders.rowsWithNoKeys, duplicateKeysStream);
+    }
+    writeContentToCsv(
+      { which: 'right', index: missingIndex, data: JSON.stringify(right[missingIndex]) },
+      fileHeaders.rowsWithNoKeys,
+      rowsWithNoKeysStream
+    );
+  });
+
+  if (duplicateKeysStream) {
+    duplicateKeysStream.end();
+  } else {
+    matchedRows.files.duplicateKeys = null;
+  }
+
+  if (rowsWithNoKeysStream) {
+    rowsWithNoKeysStream.end();
+  } else {
+    matchedRows.files.rowsWithNoKeys = null;
+  }
 
   return matchedRows;
 }

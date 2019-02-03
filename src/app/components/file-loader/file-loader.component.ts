@@ -6,6 +6,8 @@ import { FILETYPE_REGEX } from '../../constants';
 import * as XLSX from 'xlsx';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
+import * as prettyBytes from 'pretty-bytes';
+import { UtilsService } from '../../providers/utils.service';
 
 @Component({
   selector: 'app-file-loader',
@@ -19,8 +21,14 @@ export class FileLoaderComponent implements OnInit {
   filename: string;
   fileStat: FileStat | undefined;
   type: FileType;
+  prettySize: string;
 
-  constructor(private electronService: ElectronService, private log: LogService, private appService: AppService) {}
+  constructor(
+    private electronService: ElectronService,
+    private log: LogService,
+    private appService: AppService,
+    private utils: UtilsService
+  ) {}
 
   ngOnInit() {}
 
@@ -109,5 +117,6 @@ export class FileLoaderComponent implements OnInit {
       created: fileStat.ctime,
       modified: fileStat.mtime,
     };
+    this.prettySize = prettyBytes(fileStat.size, { locale: this.utils.getLanguage() });
   }
 }

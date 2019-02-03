@@ -1,5 +1,15 @@
-import { Component, OnInit, Input, AfterViewInit, ViewChildren, QueryList, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { MatchRows, MatchRowsItem } from '../../models';
+import {
+  Component,
+  OnInit,
+  Input,
+  AfterViewInit,
+  ViewChildren,
+  QueryList,
+  OnDestroy,
+  ViewEncapsulation,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { MatchRowsItem, ComparisonRow, MatchRowsOutput } from '../../models';
 import { HeaderCellSizeDirective } from '../../directives/header-cell-size.directive';
 import { ScrollDispatcher, CdkScrollable } from '@angular/cdk/scrolling';
 import { Subscription } from 'rxjs';
@@ -8,24 +18,6 @@ import { CHAR_TO_PIXEL_RATIO, NOOP } from '../../constants';
 import * as _ from 'lodash';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
-
-interface TableRow {
-  data: MatchRowsItem;
-  index: number;
-}
-
-interface TableCell {
-  value: string;
-  diff: any[]; // TODO: figure this one out!
-}
-
-interface HeaderByName {
-  [header: string]: HeaderCellSizeDirective;
-}
-
-interface HeaderMaxWidthByName {
-  [header: string]: number;
-}
 
 interface TableOption {
   name: OptionName;
@@ -40,6 +32,7 @@ type OptionName = 'scrollSync' | 'hideMatchingRows' | 'hideMatchingCols';
   selector: 'app-comparison-table-cdk',
   templateUrl: './comparison-table-cdk.component.html',
   styleUrls: ['./comparison-table-cdk.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
 export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -61,18 +54,24 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
   get headers(): string[] {
     return this._headers;
   }
-
-  @Input() data: MatchRows;
+  @Input() compareResults: MatchRowsOutput;
+  @Input()
+  set rows(rows: ComparisonRow[]) {
+    this._rows = rows;
+    this.applyFilters();
+  }
+  get rows() {
+    return this._rows;
+  }
   @Input()
   set maxHeight(height: number) {
     this.containerStyle.height = `${height}px`;
   }
   // Headers with "_#_" added as first element
   private _columns: string[];
-  private _rows: TableRow[];
-
+  private _rows: ComparisonRow[];
   visibleColumns: string[];
-  visibleRows: TableRow[];
+  visibleRows: ComparisonRow[];
 
   scroll$: Subscription;
 
@@ -92,7 +91,6 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
   ngOnInit() {
     this.isInit = true;
     this.initScrollListener();
-    this.initRows();
   }
 
   ngAfterViewInit() {}
@@ -105,7 +103,7 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
 
   getColWidth(col: string) {
     try {
-      return `${this.data.colMetadata[col].pixels}px`;
+      return `${this.compareResults.colMetadata[col].pixels}px`;
     } catch (ex) {
       return `${col.length * CHAR_TO_PIXEL_RATIO}px`;
     }
@@ -126,54 +124,12 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
     });
   }
 
-  private initRows() {
-    this.appService.loading = true;
-    this._rows = [];
-    // this.rightRows = [];
-    Object.keys(this.data.matchedRows).forEach((key, i) => {
-      this._rows.push({
-        data: this.data.matchedRows[key],
-        index: i + 1,
-      });
-    });
-    this.applyFilters();
-    this.log.debug('_rows:', this._rows);
-    this.appService.loading = false;
-  }
-
   private getOption(name: OptionName): TableOption {
     return this.options.find(option => option.name === name);
   }
 
-  // @DEPRECATED - added calculation as part of comparison
-  // private setColWidth() {
-  //   if (this.headerDirective) {
-  //     setTimeout(() => {
-  //       const left: HeaderByName = this.headerDirective.filter(header => header.name === 'left').reduce(this.groupHeaderByName, {});
-  //       const right: HeaderByName = this.headerDirective.filter(header => header.name === 'right').reduce(this.groupHeaderByName, {});
-  //       const maxWidth: HeaderMaxWidthByName = this.headers.reduce((headerWithMaxWidth: { [header: string]: number }, header) => {
-  //         headerWithMaxWidth[header] = Math.max(left[header].getClientWidth(), right[header].getClientWidth());
-  //         return headerWithMaxWidth;
-  //       }, {});
-  //       this.headers.forEach(header => {
-  //         try {
-  //           left[header].setWidth(maxWidth[header]);
-  //           right[header].setWidth(maxWidth[header]);
-  //         } catch (ex) {
-  //           this.log.debug('Error setting width', ex);
-  //         }
-  //       });
-  //     });
-  //   }
-  // }
-  // @DEPRECATED - added calculation as part of comparison
-  // private groupHeaderByName(byHeader: HeaderByName, header: HeaderCellSizeDirective): HeaderByName {
-  //   byHeader[header.header] = header;
-  //   return byHeader;
-  // }
-
-  trackBy(index: number, row: TableRow) {
-    return row.index;
+  trackBy(index: number, row: ComparisonRow) {
+    return row.key;
   }
 
   onOptionChange(option: TableOption) {
@@ -182,12 +138,11 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
   }
 
   applyFilters() {
-    this.appService.loading = true;
     const hideMatchingRows = this.getOption('hideMatchingRows').value;
     const hideMatchingCols = this.getOption('hideMatchingCols').value;
 
     this.log.time('visibleRows');
-    this.visibleRows = Array.isArray(this._rows) && hideMatchingRows ? this._rows.filter(row => row.data.hasDiffs) : this._rows;
+    this.visibleRows = Array.isArray(this.rows) && hideMatchingRows ? this.rows.filter(row => row.hasDiffs) : this.rows;
     this.log.timeEnd('visibleRows');
 
     this.log.time('visibleColumns');
@@ -195,13 +150,12 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
       Array.isArray(this._columns) && hideMatchingCols
         ? this._columns.filter(col => {
             try {
-              return col === '_#_' || this.data.colMetadata[col].hasDiffs;
+              return col === '_#_' || this.compareResults.colMetadata[col].hasDiffs;
             } catch (ex) {
               return false;
             }
           })
         : this._columns;
     this.log.timeEnd('visibleColumns');
-    this.appService.loading = false;
   }
 }

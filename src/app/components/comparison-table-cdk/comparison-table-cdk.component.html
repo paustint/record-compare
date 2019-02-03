@@ -16,9 +16,9 @@
             <th cdk-header-cell *cdkHeaderCellDef>#</th>
             <td cdk-cell *cdkCellDef="let row">
               <div class="row-number-cell">
-                {{row.index}}
-                <i class="pi pi-check text-success" *ngIf="!row.data.hasDiffs"></i>
-                <i class="pi pi-times text-danger" *ngIf="row.data.hasDiffs"></i>
+                {{row.leftIndex}}
+                <i class="pi pi-check text-success" *ngIf="!row.hasDiffs"></i>
+                <i class="pi pi-times text-danger" *ngIf="row.hasDiffs"></i>
               </div>
             </td>
           </ng-container>
@@ -33,12 +33,8 @@
                 {{col}}
             </th>
 
-            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'diff mismatch-column': row.data.comparison[col] && row.data.comparison[col].content.hasDiff}">
-                <span
-                  *ngIf="row.data.comparison[col] && row.data.comparison[col].content.left"
-                  [innerHtml]="row.data.comparison[col].content.left"
-                >
-                </span>
+            <td cdk-cell *cdkCellDef="let row">
+                <span *ngIf="row.left[col]" [innerHtml]="row.left[col]"></span>
             </td>
 
           </ng-container>
@@ -57,9 +53,9 @@
             <th cdk-header-cell *cdkHeaderCellDef>#</th>
             <td cdk-cell *cdkCellDef="let row">
               <div class="row-number-cell">
-                {{row.index}}
-                <i class="pi pi-check text-success" *ngIf="!row.data.hasDiffs"></i>
-                <i class="pi pi-times text-danger" *ngIf="row.data.hasDiffs"></i>
+                {{row.rightIndex}}
+                <i class="pi pi-check text-success" *ngIf="!row.hasDiffs"></i>
+                <i class="pi pi-times text-danger" *ngIf="row.hasDiffs"></i>
               </div>
             </td>
           </ng-container>
@@ -72,12 +68,8 @@
               >
               {{col}}
             </th>
-            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'diff mismatch-column': row.data.comparison[col] && row.data.comparison[col].content.hasDiff}">
-                <span
-                  *ngIf="row.data.comparison[col] && row.data.comparison[col].content.right"
-                  [innerHtml]="row.data.comparison[col].content.right"
-                >
-                </span>
+            <td cdk-cell *cdkCellDef="let row">
+              <span *ngIf="row.right[col]" [innerHtml]="row.right[col]"></span>
             </td>
           </ng-container>
 

@@ -1,0 +1,24 @@
+
+
+<div *ngIf="rows?.length > 0">
+
+  <div>
+    <p-paginator
+      [first]="pagination.page * pagination.pageSize"
+      [rows]="pagination.pageSize"
+      [totalRecords]="pagination.total"
+      pageLinkSize="10"
+      [rowsPerPageOptions]="[25, 50, 75, 100]"
+      (onPageChange)="paginate($event)"
+    ></p-paginator>
+  </div>
+
+  <app-comparison-table-cdk
+    [compareResults]="compareResults"
+    [headers]="headers"
+    [rows]="rows"
+    [maxHeight]="contentHeight"
+  ></app-comparison-table-cdk>
+
+</div>
+

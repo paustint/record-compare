@@ -1,14 +1,5 @@
 import { Component, OnInit, ViewChild, HostListener, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import {
-  FileContentsEvent,
-  MatchRows,
-  CompareType,
-  LeftRight,
-  DiffMetadata,
-  CompareSettings,
-  WorkerEvent,
-  WorkerEventCompare,
-} from '../../models';
+import { FileContentsEvent, MatchRows, CompareType, LeftRight, DiffMetadata, CompareSettings } from '../../models';
 import { ComparisonService } from '../../providers/comparison.service';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
@@ -72,6 +63,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       } else {
         this.updateDisabledButtons();
       }
+      this.cd.detectChanges();
     });
 
     this.electron.workerEvents$.subscribe(results => {
@@ -109,101 +101,19 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   async onCompare(compareType: CompareType) {
-    // this.compareUsingRenderer(compareType);
-    // this.compareUsingWorkerIPC(compareType);
-    this.compareUsingWorkerBinary(compareType);
-  }
-
-  // async compareUsingRenderer(compareType: CompareType) {
-  //   this.appService.loading = true;
-  //   this.compareType = compareType;
-  //   this.compareActive = true;
-  //   if (compareType === 'table') {
-  //     if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
-  //       // TODO: fix key field! (allow user input)
-  //       // TODO: fix fields to compare! (allow user input)
-  //       this.log.time('compareData');
-  //       this.matchedRows = await this.comparison.compareTableData(this.left.parsed, this.right.parsed, {
-  //         keyFields: this.settings.keys[0],
-  //         fieldsToCompare: this.left.headers,
-  //         keyIgnoreCase: this.settings.keyIgnoreCase,
-  //       });
-  //       this.tableDiffMetadata = this.matchedRows.diffMetadata;
-  //       this.log.timeEnd('compareData');
-  //     } else {
-  //       // TODO: data is in incompatible format (e.x. text vs table)
-  //     }
-  //   } else {
-  //     // TODO: store text variables somewhere
-  //     // can use ngTextDiff
-  //   }
-  //   this.appService.loading = false;
-  // }
-
-  async compareUsingWorkerBinary(compareType: CompareType) {
     this.appService.loading = true;
     this.compareType = compareType;
     if (compareType === 'table') {
       if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
-        this.log.time('compare data');
-        // const fileName = this.electron.path.join(this.electron.tempPath, 'record-compare.tempfile.json');
-        // this.log.debug('temp fileName', fileName);
-        // await this.electron.fs.writeJSON(fileName, {
-        //   left: this.left.parsed,
-        //   right: this.right.parsed,
-        //   options: {
-        //     keyFields: this.settings.keys[0],
-        //     fieldsToCompare: this.left.headers,
-        //     keyIgnoreCase: this.settings.keyIgnoreCase,
-        //   },
-        // });
-
-        const writeStream = this.electron.binaryClient.send(
-          JSON.stringify({
-            name: 'COMPARE_TABLE',
-            payload: {
-              left: this.left,
-              right: this.right,
-              options: {
-                keyFields: this.settings.keys[0],
-                fieldsToCompare: this.left.headers,
-                keyIgnoreCase: this.settings.keyIgnoreCase,
-              },
-            },
-          })
-        );
-
-        writeStream.end();
-
-        this.electron.binaryClient.on('stream', readStream => {
-          let parts = '';
-          let results: WorkerEvent<WorkerEventCompare>;
-          readStream.on('data', data => {
-            console.log('client:stream:data');
-            parts += data;
+        try {
+          this.comparison.compareTableData(this.left, this.right, {
+            keyFields: this.settings.keys[0],
+            fieldsToCompare: this.left.headers,
+            keyIgnoreCase: this.settings.keyIgnoreCase,
           });
-          readStream.on('end', async () => {
-            console.log('client:stream:end', parts);
-            results = JSON.parse(parts);
-            this.matchedRows = await this.electron.fs.readJSON(results.payload.filename);
-            // this.matchedRows = results.payload;
-            // this.tableDiffMetadata = this.matchedRows.diffMetadata; // commenting out to test performance
-            // this.compareActive = true;
-            this.appService.loading = false;
-            this.log.timeEnd('compare data');
-            this.cd.detectChanges();
-          });
-        });
-
-        // const sub = this.electron.workerEvents$.pipe(filter(ev => ev.name === 'COMPARE_TABLE')).subscribe(results => {
-        //   this.matchedRows = results.payload;
-        //   this.tableDiffMetadata = this.matchedRows.diffMetadata;
-        //   this.compareActive = true;
-        //   this.appService.loading = false;
-        //   this.log.timeEnd('compareData');
-        //   sub.unsubscribe();
-        //   this.cd.detectChanges();
-        // });
+        } catch (ex) {
+          this.log.debug('Error comparing', ex);
+        }
       } else {
         // TODO: data is in incompatible format (e.x. text vs table)
       }
@@ -212,40 +122,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
       // can use ngTextDiff
     }
   }
-
-  // async compareUsingWorkerIPC(compareType: CompareType) {
-  //   this.appService.loading = true;
-  //   this.compareType = compareType;
-  //   if (compareType === 'table') {
-  //     if ((this.left.type === 'csv' || this.left.type === 'xlsx') && (this.right.type === 'csv' || this.right.type === 'xlsx')) {
-  //       this.log.time('compareData');
-  //       this.electron.sendEventToWorker('COMPARE_TABLE', {
-  //         left: this.left.parsed,
-  //         right: this.right.parsed,
-  //         options: {
-  //           keyFields: this.settings.keys[0],
-  //           fieldsToCompare: this.left.headers,
-  //           keyIgnoreCase: this.settings.keyIgnoreCase,
-  //         },
-  //       });
-
-  //       const sub = this.electron.workerEvents$.pipe(filter(ev => ev.name === 'COMPARE_TABLE')).subscribe(results => {
-  //         this.matchedRows = results.payload;
-  //         this.tableDiffMetadata = this.matchedRows.diffMetadata;
-  //         this.compareActive = true;
-  //         this.appService.loading = false;
-  //         this.log.timeEnd('compareData');
-  //         sub.unsubscribe();
-  //         this.cd.detectChanges();
-  //       });
-  //     } else {
-  //       // TODO: data is in incompatible format (e.x. text vs table)
-  //     }
-  //   } else {
-  //     // TODO: store text variables somewhere
-  //     // can use ngTextDiff
-  //   }
-  // }
 
   isTable() {
     if (this.left && this.right) {

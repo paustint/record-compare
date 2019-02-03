@@ -5,7 +5,7 @@ import { CompareSettingsMappingService } from './compare-settings-mapping/compar
 import { CompareSettingsComponent } from './compare-settings.component';
 import { CompareSettingsMappingComponent } from './compare-settings-mapping/compare-settings-mapping.component';
 import { CompareSettingsKeyComponent } from './compare-settings-key/compare-settings-key.component';
-import { AppSharedModule } from '../../app.shared.module';
+import { AppSharedModule } from '../../shared/app.shared.module';
 
 @NgModule({
   declarations: [CompareSettingsComponent, CompareSettingsMappingComponent, CompareSettingsKeyComponent],

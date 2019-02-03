@@ -45,26 +45,21 @@
           </div>
       </div>
 
-
-
-
-
-    <div *ngIf="left && right">
         <div *ngIf="compareActive && compareType === 'text'">
             <app-compare-text [left]="left.raw" [right]="right.raw"></app-compare-text>
         </div>
-        <div *ngIf="compareActive && matchedRows && compareType === 'table'">
+        <div *ngIf="compareType === 'table'">
             <!-- <app-comparison-table
               [headers]="left.headers"
               [data]="matchedRows"
             ></app-comparison-table> -->
-            <app-comparison-table-cdk
+            <!-- <app-comparison-table-cdk
               [headers]="left.headers"
               [data]="matchedRows"
               [maxHeight]="contentHeight"
-            ></app-comparison-table-cdk>
+            ></app-comparison-table-cdk> -->
+            <app-compare-table-container [contentHeight]="contentHeight"></app-compare-table-container>
         </div>
-      </div>
   </div>
 
   <!-- footer -->

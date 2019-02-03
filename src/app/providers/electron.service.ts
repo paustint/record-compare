@@ -9,8 +9,10 @@ import * as fs from 'fs-extra';
 import { LogService } from './log.service';
 import { IPC_EVENT_NAMES } from '../constants';
 import { Subject } from 'rxjs';
-import { WorkerEvent, WorkerEventName } from '../models';
+import { WorkerEvent, WorkerEventName, ReadCsvFileChunk } from '../models';
 const BinaryClient = window.require('binaryjs').BinaryClient;
+import * as _ from 'lodash';
+import { parse, ParseResult } from 'papaparse';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +31,7 @@ export class ElectronService {
   };
   tempPath: string;
   binaryClient: any;
+  binaryClientConnected = false;
 
   private workerEvents = new Subject<WorkerEvent<any>>();
   workerEvents$ = this.workerEvents.asObservable();
@@ -54,27 +57,35 @@ export class ElectronService {
     return window && window.process && window.process.type;
   };
 
-  private initBinaryClient() {
+  private initBinaryClient(status?: string) {
     setTimeout(() => {
       this.log.debug('initBinaryClient()');
-      this.binaryClient = new BinaryClient('ws://localhost:9000');
+      if (!this.binaryClientConnected) {
+        this.binaryClient = new BinaryClient('ws://localhost:9000');
 
-      this.binaryClient.on('stream', stream => {
-        this.log.debug('initBinaryClient stream', stream);
-      });
+        this.binaryClient.on('stream', stream => {
+          this.log.debug('initBinaryClient stream', stream);
+        });
 
-      this.binaryClient.on('close', (code, message) => {
-        this.log.debug('initBinaryClient close', code, message);
-      });
+        this.binaryClient.on('close', (code, message) => {
+          this.log.debug('initBinaryClient close', code, message);
+          this.initBinaryClient('closed, attempting to reconnect');
+          this.binaryClientConnected = false;
+        });
 
-      this.binaryClient.on('open', () => {
-        this.log.debug('initBinaryClient open');
-      });
+        this.binaryClient.on('open', () => {
+          this.log.debug('initBinaryClient open');
+          this.binaryClientConnected = true;
+        });
 
-      this.binaryClient.on('error', err => {
-        this.log.debug('initBinaryClient error', err);
-      });
-    }, 1000);
+        this.binaryClient.on('error', err => {
+          this.log.debug('initBinaryClient error', err);
+          if ((err.code || '').includes('CONN')) {
+            this.initBinaryClient('connection error, attempting to reconnect');
+          }
+        });
+      }
+    }, 500);
   }
 
   private initEvents() {
@@ -98,5 +109,57 @@ export class ElectronService {
    */
   sendEventToWorker(name: WorkerEventName, payload: any) {
     ipcRenderer.sendTo(this.windowIds.workerId, IPC_EVENT_NAMES.WORKER_MESSAGE_EV, { name, payload });
+  }
+
+  async readFileAsJson<T>(filename: string, bytesStart?: number, bytesEnd?: number): Promise<T> {
+    const fileData = await this.fs.readJSON(filename, { encoding: 'utf-8' });
+    return fileData;
+  }
+
+  async readFileAsCsv(
+    filename: string,
+    options: {
+      readChunk: ReadCsvFileChunk;
+      transform?: (value: string, field: string | number) => any;
+    }
+  ): Promise<ParseResult> {
+    const { readChunk, transform } = options;
+    if (readChunk) {
+      const header = await this.readFileChunk(filename, readChunk.header.start, readChunk.header.end);
+      const data = await this.readFileChunk(filename, readChunk.data.start, readChunk.data.end);
+      const csvStr = `${header}${data}`.trim();
+      const csv = parse(csvStr, {
+        header: true,
+        transform,
+      });
+      this.log.debug('csv', csv);
+      return csv;
+    } else {
+      const csvStr = await this.fs.readFile(filename, { encoding: 'utf-8' });
+      const csv = parse(csvStr, { header: true, transform });
+      this.log.debug('csv', csv);
+      return csv;
+    }
+  }
+
+  private readFileChunk(filename: string, bytesStart: number, bytesEnd?: number): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      let fileData = '';
+      this.fs
+        .createReadStream(filename, {
+          encoding: 'utf-8',
+          start: bytesStart,
+          end: bytesEnd,
+        })
+        .on('data', chunk => {
+          fileData += chunk;
+        })
+        .on('end', () => {
+          resolve(fileData);
+        })
+        .on('error', err => {
+          reject(err);
+        });
+    });
   }
 }
