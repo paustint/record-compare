@@ -10,11 +10,10 @@ import { LogService } from '../../providers/log.service';
 })
 export class StatusFooterComponent implements OnInit {
   @Input() tableDiffMetadata: DiffMetadata;
-  loading: boolean;
+  loading$ = this.appService.loading$;
+  footerItems$ = this.appService.footerItems$;
 
   constructor(private appService: AppService, private log: LogService) {}
 
-  ngOnInit() {
-    this.appService.loading$.subscribe(loading => (this.loading = loading));
-  }
+  ngOnInit() {}
 }

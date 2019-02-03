@@ -102,8 +102,8 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
     const csvRow: ComparisonRow = {
       hasDiffs: false,
       key,
-      leftIndex: item.leftIndex + 1,
-      rightIndex: item.rightIndex + 1,
+      leftIndex: item.left ? item.leftIndex + 1 : null,
+      rightIndex: item.right ? item.rightIndex + 1 : null,
       left: {},
       right: {},
     };
@@ -121,8 +121,8 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
         };
         const diffContent = getDiffContent(item.comparison[cellKey].diffs);
         // prepare CSV Row
-        csvRow.left[cellKey] = diffContent.left;
-        csvRow.right[cellKey] = diffContent.right;
+        csvRow.left[cellKey] = { content: diffContent.left, hasDiff: diffContent.hasDiff };
+        csvRow.right[cellKey] = { content: diffContent.right, hasDiff: diffContent.hasDiff };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
@@ -138,7 +138,7 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
         matchedRows.diffMetadata.diffCount += diffCount;
         if (diffCount > 0) {
           matchedRows.diffMetadata.cellDiffCount += 1;
-          matchedRows.diffMetadata.colsWithDiff.add(cellKey);
+          (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
         }
       });
     } else if (item.left) {
@@ -151,13 +151,13 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
         const diffContent = getDiffContent(item.comparison[cellKey].diffs);
 
         // prepare CSV Row
-        csvRow.left[cellKey] = diffContent.left;
+        csvRow.left[cellKey] = { content: diffContent.left, hasDiff: true };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
         matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
         matchedRows.colMetadata[cellKey].hasDiffs = true;
-        matchedRows.diffMetadata.colsWithDiff.add(cellKey);
+        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
         matchedRows.diffMetadata.diffCount += item.left[cellKey].length;
         matchedRows.diffMetadata.cellDiffCount += 1;
       });
@@ -172,13 +172,13 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
         const diffContent = getDiffContent(item.comparison[cellKey].diffs);
 
         // prepare CSV Row
-        csvRow.left[cellKey] = diffContent.left;
+        csvRow.right[cellKey] = { content: diffContent.right, hasDiff: true };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
         matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
         matchedRows.colMetadata[cellKey].hasDiffs = true;
-        matchedRows.diffMetadata.colsWithDiff.add(cellKey);
+        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
         matchedRows.diffMetadata.diffCount += item.right[cellKey].length;
         matchedRows.diffMetadata.cellDiffCount += 1;
       });
@@ -221,7 +221,12 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
 
   // Convert length to pixels
   Object.values(matchedRows.colMetadata).forEach(val => (val.pixels = val.length * CHAR_TO_PIXEL_RATIO));
-  matchedRows.diffMetadata.colDiffCount = matchedRows.diffMetadata.colsWithDiff.size;
+  // hasDiffs was incorrect for some columns when calculated above
+  Object.keys(matchedRows.colMetadata).forEach(key => {
+    matchedRows.colMetadata[key].hasDiffs = (matchedRows.diffMetadata.colsWithDiff as Set<string>).has(key);
+  });
+  matchedRows.diffMetadata.colsWithDiff = Array.from(matchedRows.diffMetadata.colsWithDiff) as string[];
+  matchedRows.diffMetadata.colDiffCount = matchedRows.diffMetadata.colsWithDiff.length;
 
   comparisonStream.end();
 

@@ -22,6 +22,7 @@ import { WebviewDirective } from '../directives/webview.directive';
 import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { PaginatorModule } from 'primeng/paginator';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 /**
  * This component imports items (modules/directives/pipes)
@@ -52,6 +53,7 @@ import { PaginatorModule } from 'primeng/paginator';
     ListboxModule,
     MultiSelectModule,
     PaginatorModule,
+    ProgressBarModule,
   ],
   exports: [
     CommonModule,
@@ -77,6 +79,7 @@ import { PaginatorModule } from 'primeng/paginator';
     ListboxModule,
     MultiSelectModule,
     PaginatorModule,
+    ProgressBarModule,
   ],
 })
 export class AppSharedModule {}

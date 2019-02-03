@@ -21,7 +21,7 @@ export class ComparisonService {
 
   private _pagination: Pagination;
 
-  private pagination = new BehaviorSubject<Pagination>({ total: 0, page: 0, pageSize: 25 });
+  private pagination = new BehaviorSubject<Pagination>({ total: 0, totalDiffs: 0, page: 0, pageSize: 25 });
   pagination$ = this.pagination.asObservable();
 
   private rows = new BehaviorSubject<ComparisonRow[]>([]);
@@ -62,7 +62,7 @@ export class ComparisonService {
     }
     this.appService.loading = true;
     const start = Math.min(this.currBytesPerRow.length - 1, pagination.page * pagination.pageSize + 1);
-    const end = Math.min(this.currBytesPerRow.length - 1, pagination.page * pagination.pageSize + pagination.pageSize + 1);
+    const end = Math.min(this.currBytesPerRow.length - 1, pagination.page * (pagination.pageSize * 2) + pagination.pageSize + 1);
     const parseResults = await this.electron.readFileAsCsv(this.currentCompareResults.files.comparison, {
       readChunk: {
         header: { start: this.currBytesPerRow[0].start, end: this.currBytesPerRow[0].end },
@@ -94,7 +94,11 @@ export class ComparisonService {
 
     this.currentCompareResults = await this.waitForResults<MatchRowsOutput>();
     this.log.debug(this.currentCompareResults);
-    this.pagination.next({ ...this._pagination, total: this.currentCompareResults.diffMetadata.matchedRowsCount });
+    this.pagination.next({
+      ...this._pagination,
+      total: this.currentCompareResults.diffMetadata.matchedRowsCount,
+      totalDiffs: this.currentCompareResults.diffMetadata.rowDiffCount,
+    });
     this.headers.next(Object.keys(this.currentCompareResults.colMetadata));
     this.currBytesPerRow = await this.electron.readFileAsJson<RowBytes[]>(this.currentCompareResults.files.bytesPerRow);
     this.log.timeEnd('compare data');
@@ -105,14 +109,14 @@ export class ComparisonService {
    * PRIVATE
    */
 
-  private getRowCache(pagination?: Pagination) {
+  private getRowCache(pagination?: Pagination, hideMatchingRows = false) {
     const { page, pageSize } = pagination || this._pagination;
-    return this._rowCache[`${page}+${pageSize}`];
+    return this._rowCache[`${page}+${pageSize}+${hideMatchingRows ? 'hidematch' : 'all'}`];
   }
 
-  private setRowCache(rows: ComparisonRow[], pagination?: Pagination) {
+  private setRowCache(rows: ComparisonRow[], pagination?: Pagination, hideMatchingRows = false) {
     const { page, pageSize } = pagination || this._pagination;
-    this._rowCache[`${page}+${pageSize}`] = {
+    this._rowCache[`${page}+${pageSize}+${hideMatchingRows ? 'hidematch' : 'all'}`] = {
       page,
       pageSize,
       rows,
@@ -132,6 +136,7 @@ export class ComparisonService {
   private resetPagination() {
     this.pagination.next({
       total: 0,
+      totalDiffs: 0,
       page: 0,
       pageSize: 25,
     });

@@ -16,12 +16,12 @@ import { HomeComponent } from './components/home/home.component';
 import { FileLoaderComponent } from './components/file-loader/file-loader.component';
 import { CompareMenuComponent } from './components/compare-menu/compare-menu.component';
 import { CompareTextComponent } from './components/compare-text/compare-text.component';
-import { ComparisonTableCdkComponent } from './components/comparison-table-cdk/comparison-table-cdk.component';
+import { ComparisonTableCdkComponent } from './components/compare-table/comparison-table/comparison-table.component';
 import { StatusFooterComponent } from './components/status-footer/status-footer.component';
 import { CompareButtonsComponent } from './components/compare-buttons/compare-buttons.component';
 import { CompareSettingsModule } from './components/compare-settings/compare-settings.module';
 import { AppSharedModule } from './shared/app.shared.module';
-import { CompareTableContainerComponent } from './components/compare-table-container/compare-table-container.component';
+import { CompareTableContainerComponent } from './components/compare-table/compare-table-container.component';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {

@@ -58,17 +58,11 @@
 
     .mismatch {
       background-color: #fdb8c0 !important;
-
-      @at-root td#{&} {
-        background-color: #fee8e9;
-        border-color: #e9aeae
     }
 
-    }
-
-    .mismatch-column {
+    .mismatch-cell {
       background-color: #fee8e9;
-      border-color: #e9aeae
+      // border-color: #e9aeae
     }
   // }
 

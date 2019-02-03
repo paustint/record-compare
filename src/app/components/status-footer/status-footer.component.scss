@@ -1,3 +1,11 @@
+
+.status-items {
+
+}
+.status-items-section {
+
+}
+
 .status-label {
 
 }
@@ -6,4 +14,18 @@
 }
 .loading-container {
 
+}
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.footer-progress {
+  height: 6px;
+}
+
+.footer-status {
+  height: 50px;
 }

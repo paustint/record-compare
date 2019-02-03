@@ -24,7 +24,7 @@ export function writeContentToCsv(data: any | any[], fields: string[], fileStrea
 }
 
 export function getDiffContent(diffs: [number, string][]): MatchRowsItemContent {
-  const output = {
+  const output: MatchRowsItemContent = {
     left: '',
     right: '',
     hasDiff: false,

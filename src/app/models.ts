@@ -2,6 +2,7 @@ import { SafeHtml } from '@angular/platform-browser';
 
 export interface Pagination {
   total: number;
+  totalDiffs: number;
   page: number;
   pageSize: number;
 }
@@ -19,9 +20,18 @@ export type FileType = 'csv' | 'xlsx' | 'text';
 export type MatchType = 'add' | 'remove';
 export type OtherCompareTypes = 'adkeyIgnoreCased' | 'compareIgnoreCase';
 
+export interface AppFooterItem {
+  isHeadingLabel?: boolean;
+  title: string;
+  hasValue: boolean;
+  value?: string | number | boolean | null | undefined;
+  titleClass?: string | string[] | Set<string> | { [klass: string]: any };
+  valueClass?: string | string[] | Set<string> | { [klass: string]: any };
+}
+
 export interface ReadCsvFileChunk {
   header: { start: number; end: number };
-  data: { start: number; end: number };
+  data: { start: number; end?: number };
 }
 
 export interface CompareSettings {
@@ -80,13 +90,20 @@ export interface FileContentsEventText extends FileContentsEventBase {
   type: 'text';
 }
 
+export interface ComparisonRowItem {
+  [key: string]: {
+    hasDiff: boolean;
+    content: string | SafeHtml;
+  };
+}
+
 export interface ComparisonRow {
   hasDiffs: boolean;
   key: string;
-  leftIndex: number;
-  rightIndex: number;
-  left: any;
-  right: any;
+  leftIndex?: number;
+  rightIndex?: number;
+  left: ComparisonRowItem;
+  right: ComparisonRowItem;
 }
 
 export interface RowAndIndex {
@@ -122,7 +139,7 @@ export interface DiffMetadata {
   colDiffCount: number;
   cellDiffCount: number;
   rowsWithDiff: string[]; // key
-  colsWithDiff: Set<String>;
+  colsWithDiff: Set<String> | string[];
 }
 
 export interface LeftRightData {

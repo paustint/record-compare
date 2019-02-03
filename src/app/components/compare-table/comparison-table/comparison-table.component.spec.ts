@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ComparisonTableCdkComponent } from './comparison-table-cdk.component';
+import { ComparisonTableCdkComponent } from './comparison-table.component';
 
 describe('ComparisonTableCdkComponent', () => {
   let component: ComparisonTableCdkComponent;
@@ -8,9 +8,8 @@ describe('ComparisonTableCdkComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ComparisonTableCdkComponent ]
-    })
-    .compileComponents();
+      declarations: [ComparisonTableCdkComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

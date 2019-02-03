@@ -12,6 +12,14 @@ html, body {
   height: 100%;
 }
 
+.position-relative {
+  position: relative;
+}
+
+.position-absolute {
+  position: absolute;
+}
+
 .spacer {
   flex: 1 1 auto;
 }
@@ -671,4 +679,8 @@ a.text-dark:hover, a.text-dark:focus {
 .ml-auto,
 .mx-auto {
   margin-left: auto !important;
+}
+
+.mb-100 {
+  margin-bottom: 100% !important;
 }

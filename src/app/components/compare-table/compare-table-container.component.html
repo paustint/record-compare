@@ -1,0 +1,33 @@
+
+
+<div *ngIf="rows?.length > 0">
+
+    <div class="p-grid options-row">
+      <div class="p-col">
+        <span *ngFor="let option of options" class="mr-2">
+          <p-checkbox [ngModel]="option.value" (ngModelChange)="onOptionChange(option)" binary="true" [label]="option.label"></p-checkbox>
+        </span>
+      </div>
+    </div>
+
+  <div #paginationDiv>
+    <p-paginator
+      [first]="pagination.page * pagination.pageSize"
+      [rows]="pagination.pageSize"
+      [totalRecords]="this.hideMatchingRows ? pagination.totalDiffs : pagination.total"
+      pageLinkSize="10"
+      [rowsPerPageOptions]="[25, 50, 75, 100]"
+      (onPageChange)="paginate($event)"
+    ></p-paginator>
+  </div>
+
+  <app-comparison-table
+    [compareResults]="compareResults"
+    [headers]="visibleHeaders"
+    [rows]="visibleRows"
+    [scrollSync]="scrollSync"
+    [maxHeight]="contentHeight"
+  ></app-comparison-table>
+
+</div>
+

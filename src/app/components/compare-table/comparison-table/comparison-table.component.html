@@ -1,46 +1,39 @@
 
 <span class="diff-table">
-  <div class="p-grid options-row">
-      <div class="p-col">
-        <span *ngFor="let option of options" class="mr-2">
-          <p-checkbox [ngModel]="option.value" (ngModelChange)="onOptionChange(option)" binary="true" [label]="option.label"></p-checkbox>
-        </span>
-      </div>
-  </div>
 
   <div class="p-grid grid-container" [ngStyle]="containerStyle">
       <div class="p-col grid-container-col" id="left-compare-table-container" appContainer cdkScrollable>
         <!-- LEFT -->
-        <table cdk-table [dataSource]="visibleRows" [trackBy]="trackBy">
+        <table cdk-table [dataSource]="rows" [trackBy]="trackBy">
           <ng-container cdkColumnDef="_#_" sticky="true">
             <th cdk-header-cell *cdkHeaderCellDef>#</th>
             <td cdk-cell *cdkCellDef="let row">
               <div class="row-number-cell">
-                {{row.leftIndex}}
+                {{row.leftIndex ? row.leftIndex : ''}}
                 <i class="pi pi-check text-success" *ngIf="!row.hasDiffs"></i>
                 <i class="pi pi-times text-danger" *ngIf="row.hasDiffs"></i>
               </div>
             </td>
           </ng-container>
           <ng-container [cdkColumnDef]="col" *ngFor="let col of headers">
-
             <th
               cdk-header-cell
               *cdkHeaderCellDef
               appHeaderCellSize
               [ngStyle]="{'min-width': getColWidth(col)}"
+              [ngClass]="{'mismatch-cell': colHasDiffs(col)}"
             >
-                {{col}}
+              {{col}}
             </th>
 
-            <td cdk-cell *cdkCellDef="let row">
-                <span *ngIf="row.left[col]" [innerHtml]="row.left[col]"></span>
+            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.left[col] && row.left[col].hasDiff}">
+                <span *ngIf="row.left[col]" [innerHtml]="row.left[col].content"></span>
             </td>
 
           </ng-container>
 
-          <tr cdk-header-row *cdkHeaderRowDef="visibleColumns"></tr>
-          <tr cdk-row *cdkRowDef="let row; columns: visibleColumns"></tr>
+          <tr cdk-header-row *cdkHeaderRowDef="headersWithNumCol"></tr>
+          <tr cdk-row *cdkRowDef="let row; columns: headersWithNumCol"></tr>
 
         </table>
       </div>
@@ -48,7 +41,7 @@
 
       <div class="p-col grid-container-col" id="right-compare-table-container" appContainer cdkScrollable>
       <!-- RIGHT -->
-      <table cdk-table [dataSource]="visibleRows" [trackBy]="trackBy">
+      <table cdk-table [dataSource]="rows" [trackBy]="trackBy">
           <ng-container cdkColumnDef="_#_" sticky="true">
             <th cdk-header-cell *cdkHeaderCellDef>#</th>
             <td cdk-cell *cdkCellDef="let row">
@@ -65,16 +58,17 @@
                 *cdkHeaderCellDef
                 appHeaderCellSize
                 [ngStyle]="{'min-width': getColWidth(col)}"
+                [ngClass]="{'mismatch-cell': colHasDiffs(col)}"
               >
               {{col}}
             </th>
-            <td cdk-cell *cdkCellDef="let row">
-              <span *ngIf="row.right[col]" [innerHtml]="row.right[col]"></span>
+            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.right[col] && row.right[col].hasDiff}">
+              <span *ngIf="row.right[col]" [innerHtml]="row.right[col].content"></span>
             </td>
           </ng-container>
 
-          <tr cdk-header-row *cdkHeaderRowDef="visibleColumns"></tr>
-          <tr cdk-row *cdkRowDef="let row; columns: visibleColumns"></tr>
+          <tr cdk-header-row *cdkHeaderRowDef="headersWithNumCol"></tr>
+          <tr cdk-row *cdkRowDef="let row; columns: headersWithNumCol"></tr>
 
         </table>
     </div>
