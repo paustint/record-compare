@@ -65,10 +65,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
       }
       this.cd.detectChanges();
     });
-
-    this.electron.workerEvents$.subscribe(results => {
-      console.log('[TEST] EVENT', results);
-    });
   }
 
   ngAfterViewInit() {
@@ -108,7 +104,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         try {
           this.comparison.compareTableData(this.left, this.right, {
             keyFields: this.settings.keys[0],
-            fieldsToCompare: this.left.headers,
+            mapping: this.settings.mapping,
             keyIgnoreCase: this.settings.keyIgnoreCase,
           });
         } catch (ex) {

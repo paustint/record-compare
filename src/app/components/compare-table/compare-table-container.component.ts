@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChildren, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { ComparisonService } from '../../providers/comparison.service';
-import { ComparisonRow, Pagination, MatchRowsOutput } from '../../models';
+import { ComparisonRow, Pagination, MatchRowsOutput, TableHeader } from '../../models';
 import { NOOP } from '../../constants';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
@@ -31,8 +31,8 @@ export class CompareTableContainerComponent implements OnInit {
   }
 
   compareResults: MatchRowsOutput;
-  headers: string[];
-  visibleHeaders: string[];
+  headers: TableHeader[];
+  visibleHeaders: TableHeader[];
   rows: ComparisonRow[];
   visibleRows: ComparisonRow[];
   pagination: Pagination;
@@ -61,12 +61,7 @@ export class CompareTableContainerComponent implements OnInit {
   ngOnInit() {}
 
   paginate(ev: { first: number; rows: number; page: number; pageCount: number }) {
-    if (ev.page !== this.pagination.page) {
-      this.comparisonService.changePage(ev.page);
-    }
-    if (ev.rows !== this.pagination.pageSize) {
-      this.comparisonService.changePageSize(ev.rows);
-    }
+    this.comparisonService.paginate(ev.page, ev.rows);
   }
 
   calculateContentHeight() {
@@ -101,7 +96,7 @@ export class CompareTableContainerComponent implements OnInit {
       Array.isArray(this.headers) && hideMatchingCols
         ? this.headers.filter(col => {
             try {
-              return col === '_#_' || this.compareResults.colMetadata[col].hasDiffs;
+              return col.label === '_#_' || this.compareResults.colMetadata[col.label].hasDiffs;
             } catch (ex) {
               return false;
             }
@@ -126,7 +121,7 @@ export class CompareTableContainerComponent implements OnInit {
       } = this.compareResults.diffMetadata;
       this.appService.setFooterItems([
         [
-          { isHeadingLabel: true, title: 'Differences' },
+          { isHeadingLabel: true, title: 'Differences', hasValue: false },
           {
             title: 'Total',
             hasValue: true,
@@ -153,7 +148,7 @@ export class CompareTableContainerComponent implements OnInit {
           },
         ],
         [
-          { isHeadingLabel: true, title: 'Totals' },
+          { isHeadingLabel: true, title: 'Totals', hasValue: false },
           { title: 'Left Rows', hasValue: true, value: leftRowCount },
           { title: 'Right Rows', hasValue: true, value: rightRowCount },
           { title: 'Left Rows Skipped', hasValue: true, value: leftDuplicateKeyCount + leftRowsWithoutKeyCount || 0 },

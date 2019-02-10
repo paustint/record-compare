@@ -81,7 +81,6 @@
     "@types/jasmine": "3.3.7",
     "@types/jasminewd2": "2.0.6",
     "@types/node": "10.12.18",
-    "binaryjs": "^0.2.1",
     "codelyzer": "4.5.0",
     "conventional-changelog-cli": "2.0.11",
     "core-js": "2.6.3",

@@ -1,4 +1,5 @@
 import { SafeHtml } from '@angular/platform-browser';
+import { SelectItem } from 'primeng/api';
 
 export interface Pagination {
   total: number;
@@ -7,7 +8,7 @@ export interface Pagination {
   pageSize: number;
 }
 
-export type WorkerEventName = 'TEST' | 'COMPARE_TABLE';
+export type WorkerEventName = 'COMPARE_TABLE';
 
 export interface WorkerEvent<T> {
   name: WorkerEventName;
@@ -47,8 +48,7 @@ export interface CompareTableOptions {
   keyFields: string; // TODO: allow array
   keyIgnoreCase?: boolean;
   compareIgnoreCase?: boolean;
-  fieldsToCompare: string[]; // FIXME: wil be replaced with mapping
-  mapping?: {
+  mapping: {
     [source: string]: string;
   };
 }
@@ -179,6 +179,14 @@ export interface MatchRowsOutput {
   diffMetadata: DiffMetadata;
   colMetadata: ColMetadata;
   files: MatchRowFiles;
+  mapping: {
+    [source: string]: string;
+  };
+}
+
+export interface TableHeader {
+  label: string;
+  origLabel: string; // right column header
 }
 
 export type MatchRowsWithData = MatchRows & LeftRightData;
@@ -211,5 +219,10 @@ export interface MatchRowsItemContent {
   hasDiff: boolean;
 }
 
-// colMetadata
-// diffMetadata
+export interface MatchedItemRow {
+  left: string;
+  right?: string;
+  options: SelectItem[];
+  autoMatched: boolean;
+  autoMatchedType?: 'default' | 'lowercase' | 'removeSpecial';
+}

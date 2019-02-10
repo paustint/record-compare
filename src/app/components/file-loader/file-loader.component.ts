@@ -22,6 +22,7 @@ export class FileLoaderComponent implements OnInit {
   fileStat: FileStat | undefined;
   type: FileType;
   prettySize: string;
+  dragOverActive = false;
 
   constructor(
     private electronService: ElectronService,
@@ -32,9 +33,41 @@ export class FileLoaderComponent implements OnInit {
 
   ngOnInit() {}
 
+  onDragOver(event: any) {
+    this.dragOverActive = true;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  onDragLeave(event: any) {
+    this.dragOverActive = false;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  dropFiles(event: any) {
+    this.dragOverActive = false;
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+      let items: FileList | DataTransferItemList;
+      if (event.dataTransfer.items) {
+        items = event.dataTransfer.items;
+      } else {
+        items = event.dataTransfer.files;
+      }
+      if (items && items.length > 0) {
+        this.log.debug('event.dataTransfer.files', event.dataTransfer.files);
+        this.readFile([event.dataTransfer.files[0].path]);
+      }
+    }
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
   public async openFileDialog() {
     const filePath = this.electronService.dialog.showOpenDialog({ properties: ['openFile', 'createDirectory'] });
-    // CSV (TODO: check file extension and take action accordingly)
+    this.readFile(filePath);
+  }
+
+  private async readFile(filePath: string[]) {
     if (filePath && filePath.length > 0) {
       this.filename = filePath[0];
       this.appService.loading = true;

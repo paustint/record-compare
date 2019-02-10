@@ -1,5 +1,14 @@
 import { Injectable } from '@angular/core';
-import { CompareTableOptions, WorkerEvent, MatchRowsOutput, RowBytes, ComparisonRow, Pagination, FileContentsEvent } from '../models';
+import {
+  CompareTableOptions,
+  WorkerEvent,
+  MatchRowsOutput,
+  RowBytes,
+  ComparisonRow,
+  Pagination,
+  FileContentsEvent,
+  TableHeader,
+} from '../models';
 import { LogService } from './log.service';
 import { ElectronService } from './electron.service';
 import { BehaviorSubject } from 'rxjs';
@@ -27,7 +36,7 @@ export class ComparisonService {
   private rows = new BehaviorSubject<ComparisonRow[]>([]);
   rows$ = this.rows.asObservable();
 
-  private headers = new BehaviorSubject<string[]>([]);
+  private headers = new BehaviorSubject<TableHeader[]>([]);
   headers$ = this.headers.asObservable();
 
   private _rowCache: RowCache = {};
@@ -37,14 +46,8 @@ export class ComparisonService {
     this.resetPagination();
   }
 
-  async changePage(page: number) {
-    const pagination: Pagination = { ...this._pagination, page };
-    this.pagination.next(pagination);
-    await this.getRowsFromComparison(pagination);
-  }
-
-  async changePageSize(pageSize: number) {
-    const pagination: Pagination = { ...this._pagination, pageSize };
+  async paginate(page: number, pageSize: number) {
+    const pagination: Pagination = { ...this._pagination, page, pageSize };
     this.pagination.next(pagination);
     await this.getRowsFromComparison(pagination);
   }
@@ -75,6 +78,7 @@ export class ComparisonService {
     this.currentRows = parseResults.data;
     this.rows.next(this.currentRows);
     this.appService.loading = false;
+    this.log.debug('currentRows', this.currentRows);
     return this.currentRows;
   }
 
@@ -90,18 +94,24 @@ export class ComparisonService {
     this.appService.loading = true;
     this.resetComparison();
     this.log.time('compare data');
-    this.electron.binaryClient.send(JSON.stringify({ name: 'COMPARE_TABLE', payload: { left: left, right: right, options } })).end();
 
-    this.currentCompareResults = await this.waitForResults<MatchRowsOutput>();
-    this.log.debug(this.currentCompareResults);
+    this.currentCompareResults = await this.electron.sendEventToWorker('COMPARE_TABLE', { left: left, right: right, options });
+
     this.pagination.next({
       ...this._pagination,
       total: this.currentCompareResults.diffMetadata.matchedRowsCount,
       totalDiffs: this.currentCompareResults.diffMetadata.rowDiffCount,
     });
-    this.headers.next(Object.keys(this.currentCompareResults.colMetadata));
+
+    const headers = Object.keys(this.currentCompareResults.mapping).map(key => ({
+      label: key,
+      origLabel: this.currentCompareResults.mapping[key],
+    }));
+
+    this.headers.next(headers);
     this.currBytesPerRow = await this.electron.readFileAsJson<RowBytes[]>(this.currentCompareResults.files.bytesPerRow);
     this.log.timeEnd('compare data');
+
     await this.getRowsFromComparison();
   }
 
@@ -139,27 +149,6 @@ export class ComparisonService {
       totalDiffs: 0,
       page: 0,
       pageSize: 25,
-    });
-  }
-
-  private waitForResults<T>(): Promise<T> {
-    return new Promise(async (resolve, reject) => {
-      this.electron.binaryClient.on('stream', readStream => {
-        let parts = '';
-        readStream.on('error', async err => {
-          reject(err);
-        });
-        readStream.on('data', data => {
-          this.log.debug('client:stream:data');
-          parts += data;
-        });
-        readStream.on('end', async () => {
-          this.log.debug('client:stream:end');
-          const results: WorkerEvent<T> = JSON.parse(parts);
-          this.log.debug('results', results);
-          resolve(results.payload);
-        });
-      });
     });
   }
 

@@ -20,6 +20,8 @@ function createWindow() {
     y: 0,
     width: size.width,
     height: size.height,
+    minHeight: 900,
+    minWidth: 900,
   });
 
   if (serve) {

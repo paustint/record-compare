@@ -14,7 +14,6 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './components/home/home.component';
 import { FileLoaderComponent } from './components/file-loader/file-loader.component';
-import { CompareMenuComponent } from './components/compare-menu/compare-menu.component';
 import { CompareTextComponent } from './components/compare-text/compare-text.component';
 import { ComparisonTableCdkComponent } from './components/compare-table/comparison-table/comparison-table.component';
 import { StatusFooterComponent } from './components/status-footer/status-footer.component';
@@ -33,7 +32,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     AppComponent,
     HomeComponent,
     FileLoaderComponent,
-    CompareMenuComponent,
     CompareTextComponent,
     ComparisonTableCdkComponent,
     StatusFooterComponent,

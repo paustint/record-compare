@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CompareType, CompareSettings, OtherCompareTypes } from '../../models';
+import { CompareType, CompareSettings, OtherCompareTypes, MatchedItemRow } from '../../models';
 import { SelectItem } from 'primeng/api';
 
 @Component({
@@ -57,8 +57,13 @@ export class CompareSettingsComponent implements OnInit {
     this.settingsChanged.emit(this.settings);
   }
 
-  onSaveMapping(data: { mapping: { [source: string]: string } }) {
-    this.settings.mapping = data.mapping;
+  onFieldsMapped(matchedItems: MatchedItemRow[]) {
+    this.settings.mapping = matchedItems.reduce((mappings: { [left: string]: string }, item) => {
+      if (item.right) {
+        mappings[item.left] = item.right;
+      }
+      return mappings;
+    }, {});
     this.settingsChanged.emit(this.settings);
   }
 

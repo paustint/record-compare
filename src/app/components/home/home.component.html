@@ -2,12 +2,6 @@
 <div class="container" #container>
 
   <div class="header" #header>
-    <!-- Top Menu -->
-      <div class="p-grid p-dir-col">
-        <div class="p-col">
-          <app-compare-menu></app-compare-menu>
-        </div>
-      </div>
 
       <!-- File Uploader -->
       <div class="p-col file-container">
@@ -25,7 +19,7 @@
   <!-- Main Content -->
   <div class="content" #content>
 
-      <div class="p-grid" #contentConfig>
+      <div class="p-grid px-2" #contentConfig>
           <div class="p-col-fixed settings">
               <app-compare-settings
                 [leftHeaders]="left?.headers"
@@ -49,15 +43,6 @@
             <app-compare-text [left]="left.raw" [right]="right.raw"></app-compare-text>
         </div>
         <div *ngIf="compareType === 'table'">
-            <!-- <app-comparison-table
-              [headers]="left.headers"
-              [data]="matchedRows"
-            ></app-comparison-table> -->
-            <!-- <app-comparison-table-cdk
-              [headers]="left.headers"
-              [data]="matchedRows"
-              [maxHeight]="contentHeight"
-            ></app-comparison-table-cdk> -->
             <app-compare-table-container [contentHeight]="contentHeight"></app-compare-table-container>
         </div>
   </div>

@@ -15,19 +15,19 @@
               </div>
             </td>
           </ng-container>
-          <ng-container [cdkColumnDef]="col" *ngFor="let col of headers">
+          <ng-container [cdkColumnDef]="col.label" *ngFor="let col of headers">
             <th
               cdk-header-cell
               *cdkHeaderCellDef
               appHeaderCellSize
-              [ngStyle]="{'min-width': getColWidth(col)}"
-              [ngClass]="{'mismatch-cell': colHasDiffs(col)}"
+              [ngStyle]="{'min-width': getColWidth(col.label)}"
+              [ngClass]="{'mismatch-cell': colHasDiffs(col.label)}"
             >
-              {{col}}
+              {{col.label}}
             </th>
 
-            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.left[col] && row.left[col].hasDiff}">
-                <span *ngIf="row.left[col]" [innerHtml]="row.left[col].content"></span>
+            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.left[col.label] && row.left[col.label].hasDiff}">
+                <span *ngIf="row.left[col.label]" [innerHtml]="row.left[col.label].content"></span>
             </td>
 
           </ng-container>
@@ -52,18 +52,19 @@
               </div>
             </td>
           </ng-container>
-          <ng-container [cdkColumnDef]="col" *ngFor="let col of headers">
+          <ng-container [cdkColumnDef]="col.label" *ngFor="let col of headers">
               <th
                 cdk-header-cell
                 *cdkHeaderCellDef
                 appHeaderCellSize
-                [ngStyle]="{'min-width': getColWidth(col)}"
-                [ngClass]="{'mismatch-cell': colHasDiffs(col)}"
+                [ngStyle]="{'min-width': getColWidth(col.label)}"
+                [ngClass]="{'mismatch-cell': colHasDiffs(col.label)}"
               >
-              {{col}}
+              {{col.label}}
+              <div *ngIf="col.label !== col.origLabel">({{col.origLabel}})</div>
             </th>
-            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.right[col] && row.right[col].hasDiff}">
-              <span *ngIf="row.right[col]" [innerHtml]="row.right[col].content"></span>
+            <td cdk-cell *cdkCellDef="let row" [ngClass]="{'mismatch-cell': row.right[col.origLabel] && row.right[col.origLabel].hasDiff}">
+              <span *ngIf="row.right[col.origLabel]" [innerHtml]="row.right[col.origLabel].content"></span>
             </td>
           </ng-container>
 

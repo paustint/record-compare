@@ -1,15 +1,66 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'primeicons/primeicons.css';
 @import 'primeflex/primeflex.css';
-@import 'primeng/resources/themes/nova-light/theme.css';
+// @import 'primeng/resources/themes/nova-light/theme.css';
+// @import 'primeng/resources/themes/nova-dark/theme.css';
+// @import 'primeng/resources/themes/luna-blue/theme.css';
+// @import 'primeng/resources/themes/luna-amber/theme.css';
+// @import 'primeng/resources/themes/pepper-grinder/theme.scss';
+// @import 'primeng/resources/themes/omega/theme.scss';
+@import 'primeng/resources/themes/rhea/theme.css';
+// @import 'primeng/resources/themes/redmond/theme.scss';
+// @import 'primeng/resources/themes/south-street/theme.scss';
+// @import 'primeng/resources/themes/start/theme.scss';
+// @import 'primeng/resources/themes/trontastic/theme.scss';
+// @import 'primeng/resources/themes/voclain/theme.scss';
 @import 'primeng/resources/primeng.min.css';
 
 
 html, body {
+  font-family: "Open Sans", "Helvetica Neue", sans-serif;
   margin: 0;
   padding: 0;
 
   height: 100%;
+  // Use with luna themes
+  // background-color: #3f3f3f;
+  // color: #dedede;
+}
+
+.text-small {
+  font-size: small;
+}
+
+.opacity-20 {
+  opacity: .20;
+}
+
+.opacity-30 {
+  opacity: .3;
+}
+
+.opacity-50 {
+  opacity: .5;
+}
+
+.opacity-60 {
+  opacity: .6;
+}
+
+.opacity-70 {
+  opacity: .7;
+}
+
+.opacity-80 {
+  opacity: .8;
+}
+
+.opacity-90 {
+  opacity: .9;
+}
+
+.break-word {
+  overflow-wrap: break-word;
 }
 
 .position-relative {

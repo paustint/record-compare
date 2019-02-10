@@ -1,4 +1,4 @@
-export type WorkerEventName = 'TEST' | 'COMPARE_TABLE';
+export type WorkerEventName = 'COMPARE_TABLE';
 
 export type WorkerFn = (name: string, payload: any, useWsStream?: boolean) => void;
 

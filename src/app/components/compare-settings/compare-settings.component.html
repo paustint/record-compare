@@ -17,7 +17,7 @@
         [leftHeaders]="leftHeaders"
         [rightHeaders]="rightHeaders"
         [disabled]="disabled || type !== 'table'"
-        (save)="onSaveMapping($event)"
+        (mapped)="onFieldsMapped($event)"
       ></app-compare-settings-mapping>
     </div>
     <div class="p-col-fixed mr-2 p-0">

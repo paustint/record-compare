@@ -2,7 +2,7 @@
 
 <div *ngIf="rows?.length > 0">
 
-    <div class="p-grid options-row">
+    <div class="p-grid options-row mx-2">
       <div class="p-col">
         <span *ngFor="let option of options" class="mr-2">
           <p-checkbox [ngModel]="option.value" (ngModelChange)="onOptionChange(option)" binary="true" [label]="option.label"></p-checkbox>
@@ -10,7 +10,7 @@
       </div>
     </div>
 
-  <div #paginationDiv>
+  <div #paginationDiv class="m-2">
     <p-paginator
       [first]="pagination.page * pagination.pageSize"
       [rows]="pagination.pageSize"

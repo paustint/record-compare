@@ -12,6 +12,7 @@ import {
   MatchRowsOutput,
   RowBytes,
   ComparisonRow,
+  MatchRowsItem,
 } from '../../src/app/models';
 import { CHAR_TO_PIXEL_RATIO } from '../../src/app/constants';
 import { getTempFilename, getTempFolderName } from '../worker';
@@ -45,6 +46,7 @@ export async function parseAndCompare(
       const output: MatchRowsOutput = {
         diffMetadata: results.diffMetadata,
         colMetadata: results.colMetadata,
+        mapping: options.mapping,
         files: results.files,
       };
       console.log('output', output);
@@ -70,7 +72,8 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
   console.log('compareTableData()');
 
   // tslint:disable-next-line:prefer-const
-  let { keyFields, keyIgnoreCase, fieldsToCompare } = options;
+  let { keyFields, keyIgnoreCase, mapping } = options;
+  const fieldsToCompare = Object.keys(mapping);
   const matchedRows = matchRows(keyFields, left, right, keyIgnoreCase);
 
   const csvFields = ['hasDiffs', 'key', 'leftIndex', 'rightIndex', 'left', 'right'];
@@ -96,7 +99,7 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
 
   console.log('matchedRows', matchedRows);
   Object.keys(matchedRows.matchedRows).forEach(key => {
-    const item = matchedRows.matchedRows[key];
+    const item: MatchRowsItem = matchedRows.matchedRows[key];
     // Initialize max col length based on header length, then it may grow based on what data exists
 
     const csvRow: ComparisonRow = {
@@ -110,25 +113,26 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
 
     if (item.left && item.right) {
       // item.left and item.right both exist - run comparison
-      fieldsToCompare.forEach(cellKey => {
+      fieldsToCompare.forEach(leftKey => {
+        const rightKey = mapping[leftKey];
         const diffEngine = new DiffMatchPatch.diff_match_patch();
 
-        const diffs = diffEngine.diff_main(getValAsString(item.left[cellKey]), getValAsString(item.right[cellKey]));
+        const diffs = diffEngine.diff_main(getValAsString(item.left[leftKey]), getValAsString(item.right[rightKey]));
         // diffEngine.diff_cleanupSemantic(diffs);
-        item.comparison[cellKey] = {
+        item.comparison[leftKey] = {
           diffs,
-          maxLength: getMaxStringLength(item.left[cellKey], item.right[cellKey]),
+          maxLength: getMaxStringLength(item.left[leftKey], item.right[rightKey]),
         };
-        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+        const diffContent = getDiffContent(item.comparison[leftKey].diffs);
         // prepare CSV Row
-        csvRow.left[cellKey] = { content: diffContent.left, hasDiff: diffContent.hasDiff };
-        csvRow.right[cellKey] = { content: diffContent.right, hasDiff: diffContent.hasDiff };
+        csvRow.left[leftKey] = { content: diffContent.left, hasDiff: diffContent.hasDiff };
+        csvRow.right[rightKey] = { content: diffContent.right, hasDiff: diffContent.hasDiff };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
         item.hasDiffs = item.hasDiffs || diffContent.hasDiff;
-        matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
-        matchedRows.colMetadata[cellKey].hasDiffs = matchedRows.colMetadata[cellKey].hasDiffs || item.hasDiffs;
+        matchedRows.colMetadata[leftKey].length = Math.max(matchedRows.colMetadata[leftKey].length, item.comparison[leftKey].maxLength);
+        matchedRows.colMetadata[leftKey].hasDiffs = matchedRows.colMetadata[leftKey].hasDiffs || item.hasDiffs;
 
         // update diff metadata
         const diffCount = diffs
@@ -138,48 +142,48 @@ function compareTableData(left: any[], right: any[], options: CompareTableOption
         matchedRows.diffMetadata.diffCount += diffCount;
         if (diffCount > 0) {
           matchedRows.diffMetadata.cellDiffCount += 1;
-          (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
+          (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(leftKey);
         }
       });
     } else if (item.left) {
       // item.left exists, but item.right does not exist
-      fieldsToCompare.forEach(cellKey => {
-        item.comparison[cellKey] = {
-          diffs: [[-1, item.left[cellKey]]],
-          maxLength: getMaxStringLength(item.left[cellKey], ''),
+      fieldsToCompare.forEach(leftKey => {
+        item.comparison[leftKey] = {
+          diffs: [[-1, item.left[leftKey]]],
+          maxLength: getMaxStringLength(item.left[leftKey], ''),
         };
-        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+        const diffContent = getDiffContent(item.comparison[leftKey].diffs);
 
         // prepare CSV Row
-        csvRow.left[cellKey] = { content: diffContent.left, hasDiff: true };
+        csvRow.left[leftKey] = { content: diffContent.left, hasDiff: true };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
-        matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
-        matchedRows.colMetadata[cellKey].hasDiffs = true;
-        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
-        matchedRows.diffMetadata.diffCount += item.left[cellKey].length;
+        matchedRows.colMetadata[leftKey].length = Math.max(matchedRows.colMetadata[leftKey].length, item.comparison[leftKey].maxLength);
+        matchedRows.colMetadata[leftKey].hasDiffs = true;
+        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(leftKey);
+        matchedRows.diffMetadata.diffCount += item.left[leftKey].length;
         matchedRows.diffMetadata.cellDiffCount += 1;
       });
     } else {
       // item.right exists, but item.left does not exist
-      Object.keys(item.right).forEach(cellKey => {
-        item.comparison[cellKey] = {
-          diffs: [[1, item.right[cellKey]]],
-          maxLength: getMaxStringLength('', item.right[cellKey]),
+      Object.keys(item.right).forEach(rightKey => {
+        item.comparison[rightKey] = {
+          diffs: [[1, item.right[rightKey]]],
+          maxLength: getMaxStringLength('', item.right[rightKey]),
         };
 
-        const diffContent = getDiffContent(item.comparison[cellKey].diffs);
+        const diffContent = getDiffContent(item.comparison[rightKey].diffs);
 
         // prepare CSV Row
-        csvRow.right[cellKey] = { content: diffContent.right, hasDiff: true };
+        csvRow.right[rightKey] = { content: diffContent.right, hasDiff: true };
         csvRow.hasDiffs = csvRow.hasDiffs || diffContent.hasDiff;
 
         // Keep track of the max length across all cell values
-        matchedRows.colMetadata[cellKey].length = Math.max(matchedRows.colMetadata[cellKey].length, item.comparison[cellKey].maxLength);
-        matchedRows.colMetadata[cellKey].hasDiffs = true;
-        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(cellKey);
-        matchedRows.diffMetadata.diffCount += item.right[cellKey].length;
+        matchedRows.colMetadata[rightKey].length = Math.max(matchedRows.colMetadata[rightKey].length, item.comparison[rightKey].maxLength);
+        matchedRows.colMetadata[rightKey].hasDiffs = true;
+        (matchedRows.diffMetadata.colsWithDiff as Set<string>).add(rightKey);
+        matchedRows.diffMetadata.diffCount += item.right[rightKey].length;
         matchedRows.diffMetadata.cellDiffCount += 1;
       });
     }

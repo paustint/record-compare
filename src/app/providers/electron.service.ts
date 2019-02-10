@@ -9,8 +9,8 @@ import * as fs from 'fs-extra';
 import { LogService } from './log.service';
 import { IPC_EVENT_NAMES } from '../constants';
 import { Subject } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { WorkerEvent, WorkerEventName, ReadCsvFileChunk } from '../models';
-const BinaryClient = window.require('binaryjs').BinaryClient;
 import * as _ from 'lodash';
 import { parse, ParseResult } from 'papaparse';
 
@@ -30,8 +30,6 @@ export class ElectronService {
     workerId: null,
   };
   tempPath: string;
-  binaryClient: any;
-  binaryClientConnected = false;
 
   private workerEvents = new Subject<WorkerEvent<any>>();
   workerEvents$ = this.workerEvents.asObservable();
@@ -48,7 +46,6 @@ export class ElectronService {
       this.fs = window.require('fs-extra');
       this.path = window.require('path');
 
-      this.initBinaryClient();
       this.initEvents();
     }
   }
@@ -56,37 +53,6 @@ export class ElectronService {
   isElectron = () => {
     return window && window.process && window.process.type;
   };
-
-  private initBinaryClient(status?: string) {
-    setTimeout(() => {
-      this.log.debug('initBinaryClient()');
-      if (!this.binaryClientConnected) {
-        this.binaryClient = new BinaryClient('ws://localhost:9000');
-
-        this.binaryClient.on('stream', stream => {
-          this.log.debug('initBinaryClient stream', stream);
-        });
-
-        this.binaryClient.on('close', (code, message) => {
-          this.log.debug('initBinaryClient close', code, message);
-          this.initBinaryClient('closed, attempting to reconnect');
-          this.binaryClientConnected = false;
-        });
-
-        this.binaryClient.on('open', () => {
-          this.log.debug('initBinaryClient open');
-          this.binaryClientConnected = true;
-        });
-
-        this.binaryClient.on('error', err => {
-          this.log.debug('initBinaryClient error', err);
-          if ((err.code || '').includes('CONN')) {
-            this.initBinaryClient('connection error, attempting to reconnect');
-          }
-        });
-      }
-    }, 500);
-  }
 
   private initEvents() {
     this.windowIds = ipcRenderer.sendSync(IPC_EVENT_NAMES.GET_WINDOW_IDS);
@@ -101,14 +67,37 @@ export class ElectronService {
       this.log.debug('IPC Event', data);
       this.workerEvents.next(data);
     });
-    this.sendEventToWorker('TEST', { foo: 'bar' });
   }
 
   /**
    * Send event to worker process
    */
-  sendEventToWorker(name: WorkerEventName, payload: any) {
-    ipcRenderer.sendTo(this.windowIds.workerId, IPC_EVENT_NAMES.WORKER_MESSAGE_EV, { name, payload });
+  sendEventToWorker<T>(name: WorkerEventName, payload: any, waitForResponse = true): Promise<T> {
+    return new Promise((resolve, reject) => {
+      ipcRenderer.sendTo(this.windowIds.workerId, IPC_EVENT_NAMES.WORKER_MESSAGE_EV, { name, payload });
+
+      if (waitForResponse) {
+        const subscription = this.workerEvents$
+          .pipe(
+            filter(event => event.name === name),
+            map(event => event.payload)
+          )
+          .subscribe(
+            (results: T) => {
+              subscription.unsubscribe();
+              resolve(results);
+            },
+            err => {
+              subscription.unsubscribe();
+              this.log.error('Error comparing', err);
+              reject(err);
+            },
+            () => {}
+          );
+      } else {
+        resolve();
+      }
+    });
   }
 
   async readFileAsJson<T>(filename: string, bytesStart?: number, bytesEnd?: number): Promise<T> {

@@ -9,7 +9,7 @@ import {
   ViewEncapsulation,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { ComparisonRow, MatchRowsOutput } from '../../../models';
+import { ComparisonRow, MatchRowsOutput, TableHeader } from '../../../models';
 import { HeaderCellSizeDirective } from '../../../directives/header-cell-size.directive';
 import { ScrollDispatcher, CdkScrollable } from '@angular/cdk/scrolling';
 import { Subscription } from 'rxjs';
@@ -29,13 +29,13 @@ import { AppService } from '../../../providers/app.service';
 export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChildren(HeaderCellSizeDirective) headerDirective: QueryList<HeaderCellSizeDirective>;
   @ViewChildren(ContainerDirective) containers: QueryList<ContainerDirective>;
-  headersWithNumCol: string[];
-  _headers: string[];
+  headersWithNumCol: String[];
+  _headers: TableHeader[];
   @Input() scrollSync: boolean;
   @Input()
-  set headers(headers: string[]) {
+  set headers(headers: TableHeader[]) {
     this._headers = headers;
-    this.headersWithNumCol = ['_#_'].concat(headers);
+    this.headersWithNumCol = ['_#_'].concat(headers.map(item => item.label));
   }
   get headers() {
     return this._headers;

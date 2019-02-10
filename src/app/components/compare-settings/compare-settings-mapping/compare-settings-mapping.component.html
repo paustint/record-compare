@@ -6,7 +6,7 @@
   icon="pi pi-sitemap"
   iconPos="right"
   [disabled]="disabled"
-  (click)="active = true"
+  (click)="onActive()"
 ></button>
 
 <p-dialog
@@ -15,20 +15,40 @@
   [modal]="true"
   [responsive]="true"
   [blockScroll]="true"
-  [style]="{width: '350px', minWidth: '200px'}"
+  [style]="{'min-width': '550px'}"
   [minY]="70"
   [maximizable]="true"
   [baseZIndex]="10000"
 >
-  <div>
-    Default is only to use left data to match to right data with exact matching column names
-    Show two columns of auto-mapped fields
-    allow user to drag and delete a row
-    Maybe we need 4 columns (left data, left mapping, right mapping, right data)?
-  </div>
+  <div [ngStyle]="{'max-height': '70vh'}">
+    <p>
+      Specify which columns from the left file will be matched to the right file. <em>Any unmapped columns will not be compared</em>
+    </p>
+
+      <p-table [columns]="columns" [value]="mappedHeaders">
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            <th *ngFor="let column of columns">
+                {{column}}
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns" let-index="rowIndex">
+          <tr>
+            <td>{{rowData.left}}</td>
+            <td>
+              <p-dropdown [options]="rowData.options" [(ngModel)]="rowData.right" [filter]="true" placeholder="Choose mapping"></p-dropdown>
+              <span class="ml-1">
+                <i class="pi" [ngClass]="{'pi-check text-success': rowData.right, 'pi-times text-danger': !rowData.right}"></i>
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+    </div>
 
   <p-footer>
-      <button type="button" pButton icon="pi pi-times" (click)="onClose()" label="Cancel" class="ui-button-secondary"></button>
-      <button type="button" pButton icon="pi pi-check" (click)="onSave('key')" label="Save"></button>
+    <button type="button" pButton icon="pi pi-check" (click)="onSave()" label="Done"></button>
   </p-footer>
 </p-dialog>

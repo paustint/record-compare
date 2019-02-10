@@ -14,16 +14,20 @@
   - [ ] Using filters, dynamically use byteArray to get more rows as needed based on selection (cache will need to have this option as part of key)
   - [ ] Clean up old cache - this grows very quickly
     - [ ] can we use cache to recall results? Allow user to have some settings to control how this works?
-  - [ ] On page size change, if on last page, then the records shown are not the correct records
+  - [x] On page size change, if on last page, then the records shown are not the correct records
+  - [ ] IF files are dragged in, then the buttons do not enable
 
+- MISC
+  - [ ] Create types for binaryjs
 - APP
   - [x] When matching rows, we will want to keep the order and add in spaces (empty rows) on the left or right based on if there are matches later on (e.x. keep matches next to eachother no matter what, but also retain order)
   - [ ] if there is an error connecting the the binary server, try again (there is a small window where we could be disconnected - happend to me!)
-  - [ ] Figure out top menu - do we want it or not? we should use native menu instead, but need to see what menu items we want and how to use them
+  - [x] Figure out top menu - do we want it or not? we should use native menu instead, but need to see what menu items we want and how to use them
   - [ ] Figure out layout for non-file compare (e.x. tabs? radio buttons? etc..) to change view
     - [ ] For user pasted text, we should have the input (edit mode) and replace it with the compared results
 - FILE UPLOAD
-  - [ ] Allow dragging and dropping a file
+  - [x] Allow dragging and dropping a file
+    - [ ] BUG: settings buttons do not enable after dragged in file
   - [x] Show loading indicator while parsing a large file
   - [ ] Disable file input while a file is being loaded/parsed
   - [x] Filesize should be in friendly units
