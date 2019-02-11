@@ -1,55 +1,25 @@
 <!-- FOO -->
 <div class="container" #container>
 
-  <div class="header" #header>
-
-      <!-- File Uploader -->
-      <div class="p-col file-container">
-        <div class="p-grid">
-          <div class="p-col py-0">
-              <app-file-loader heading="Source" (fileContents)="onFileContents('left', $event)"></app-file-loader>
-          </div>
-          <div class="p-col py-0">
-              <app-file-loader heading="Target" (fileContents)="onFileContents('right', $event)"></app-file-loader>
-          </div>
-        </div>
-      </div>
+  <div class="mx-2 mb-2">
+    <p-tabMenu [model]="menuItems" [activeItem]="activeMenuItem">
+        <ng-template pTemplate="item" let-item let-i="index">
+            <span>
+              <fa-icon [icon]="['fal', item.icon]"></fa-icon>
+              {{item.label}}
+            </span>
+        </ng-template>
+    </p-tabMenu>
   </div>
 
-  <!-- Main Content -->
-  <div class="content" #content>
-
-      <div class="p-grid px-2" #contentConfig>
-          <div class="p-col-fixed settings">
-              <app-compare-settings
-                [leftHeaders]="left?.headers"
-                [rightHeaders]="right?.headers"
-                [disabled]="!left || !right"
-                [type]="compareType"
-                (settingsChanged)="onSettingsChanged($event)"
-              ></app-compare-settings>
-          </div>
-          <div class="p-col-fixed mt-auto mb-3">
-              <app-compare-buttons
-                [allDisabled]="disableButtons.all"
-                [textDisabled]="disableButtons.text"
-                [tableDisabled]="disableButtons.table"
-                (compare)="onCompare($event)"
-              ></app-compare-buttons>
-          </div>
-      </div>
-
-        <div *ngIf="compareActive && compareType === 'text'">
-            <app-compare-text [left]="left.raw" [right]="right.raw"></app-compare-text>
-        </div>
-        <div *ngIf="compareType === 'table'">
-            <app-compare-table-container [contentHeight]="contentHeight"></app-compare-table-container>
-        </div>
+  <div [ngSwitch]="activeMenuItem.id">
+      <app-file-compare *ngSwitchCase="'compareFiles'" [parentContentHeight]="contentHeight"></app-file-compare>
+      <app-text-compare *ngSwitchCase="'compareText'" [parentContentHeight]="contentHeight"></app-text-compare>
   </div>
 
   <!-- footer -->
   <div class="footer" #footer>
-    <app-status-footer [tableDiffMetadata]="tableDiffMetadata"></app-status-footer>
+      <app-status-footer></app-status-footer>
   </div>
 
 </div>

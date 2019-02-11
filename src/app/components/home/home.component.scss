@@ -4,24 +4,11 @@
   flex-direction: column;
   height: 100vh;
 
-  .header {
-    flex: 0 1 auto;
-  }
-  .content {
-    flex: 1 1 auto;
-  }
-
   .footer {
     flex: 0 1 40px;
     min-height: 50px;
     max-height: 50px;
     height: 50px;
-  }
-
-  .file-container {
-    max-height: 90px;
-    min-height: 90px;
-    overflow: hidden;
   }
 
   .settings {

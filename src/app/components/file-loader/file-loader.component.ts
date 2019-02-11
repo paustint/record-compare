@@ -62,7 +62,7 @@ export class FileLoaderComponent implements OnInit {
     event.preventDefault();
   }
 
-  public async openFileDialog() {
+  public openFileDialog() {
     const filePath = this.electronService.dialog.showOpenDialog({ properties: ['openFile', 'createDirectory'] });
     this.readFile(filePath);
   }

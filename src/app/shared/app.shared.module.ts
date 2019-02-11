@@ -23,6 +23,10 @@ import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TabMenuModule } from 'primeng/tabmenu';
+
+import '../utils/icon-library';
 
 /**
  * This component imports items (modules/directives/pipes)
@@ -54,6 +58,8 @@ import { ProgressBarModule } from 'primeng/progressbar';
     MultiSelectModule,
     PaginatorModule,
     ProgressBarModule,
+    TabMenuModule,
+    FontAwesomeModule,
   ],
   exports: [
     CommonModule,
@@ -80,6 +86,8 @@ import { ProgressBarModule } from 'primeng/progressbar';
     MultiSelectModule,
     PaginatorModule,
     ProgressBarModule,
+    TabMenuModule,
+    FontAwesomeModule,
   ],
 })
 export class AppSharedModule {}

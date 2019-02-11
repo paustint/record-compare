@@ -1,0 +1,13 @@
+.header {
+  flex: 0 1 auto;
+}
+
+.content {
+  flex: 1 1 auto;
+}
+
+.file-container {
+  max-height: 90px;
+  min-height: 90px;
+  overflow: hidden;
+}

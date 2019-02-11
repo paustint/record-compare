@@ -21,6 +21,8 @@ import { CompareButtonsComponent } from './components/compare-buttons/compare-bu
 import { CompareSettingsModule } from './components/compare-settings/compare-settings.module';
 import { AppSharedModule } from './shared/app.shared.module';
 import { CompareTableContainerComponent } from './components/compare-table/compare-table-container.component';
+import { FileCompareComponent } from './components/file-compare/file-compare.component';
+import { TextCompareComponent } from './components/text-compare/text-compare.component';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -37,6 +39,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StatusFooterComponent,
     CompareButtonsComponent,
     CompareTableContainerComponent,
+    FileCompareComponent,
+    TextCompareComponent,
   ],
   imports: [
     AppSharedModule,

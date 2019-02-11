@@ -16,7 +16,7 @@
     - [ ] can we use cache to recall results? Allow user to have some settings to control how this works?
   - [x] On page size change, if on last page, then the records shown are not the correct records
   - [ ] IF files are dragged in, then the buttons do not enable
-
+  - [ ] row heights do not line up and cause scrolling to be out of whack
 - MISC
   - [ ] Create types for binaryjs
 - APP

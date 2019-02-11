@@ -9,7 +9,6 @@ import { LogService } from '../../providers/log.service';
   styleUrls: ['./status-footer.component.scss'],
 })
 export class StatusFooterComponent implements OnInit {
-  @Input() tableDiffMetadata: DiffMetadata;
   loading$ = this.appService.loading$;
   footerItems$ = this.appService.footerItems$;
 
