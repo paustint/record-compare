@@ -1,5 +1,5 @@
 
-<div class="header" #topContent>
+<div class="header">
 
   <div class="p-grid">
       <div class="p-col mx-2">
@@ -28,8 +28,8 @@
 </div>
 
 <!-- Main Content -->
-<div class="content" [style]="containerStyle">
-  <div *ngIf="compareActive && left && right" class="compare-text-results" [ngStyle]="containerStyle">
+<div class="content">
+  <div *ngIf="compareActive && left && right" class="compare-text-results">
       <app-compare-text [left]="left" [right]="right"></app-compare-text>
   </div>
 </div>

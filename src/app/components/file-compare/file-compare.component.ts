@@ -1,29 +1,18 @@
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, AfterViewInit, HostListener, Input } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FileContentsEvent, DiffMetadata, MatchRows, CompareType, CompareSettings, LeftRight } from '../../models';
 import { ComparisonService } from '../../providers/comparison.service';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
+import { StateService } from '../../providers/state.service';
+import { UtilsService } from '../../providers/utils.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-file-compare',
   templateUrl: './file-compare.component.html',
   styleUrls: ['./file-compare.component.scss'],
 })
-export class FileCompareComponent implements OnInit, AfterViewInit {
-  _content: ElementRef<HTMLDivElement>;
-  @ViewChild('header') header: ElementRef<HTMLDivElement>;
-  @ViewChild('contentConfig') contentConfig: ElementRef<HTMLDivElement>;
-  @ViewChild('content')
-  get content() {
-    return this._content;
-  }
-  set content(content: ElementRef<HTMLDivElement>) {
-    this.contentHeight = content.nativeElement.clientHeight - 50;
-    this._content = content;
-  }
-  @Input() parentContentHeight = 0;
-  contentHeight: number;
-
+export class FileCompareComponent implements OnInit, OnDestroy {
   left: FileContentsEvent;
   right: FileContentsEvent;
   tableDiffMetadata: DiffMetadata;
@@ -39,31 +28,50 @@ export class FileCompareComponent implements OnInit, AfterViewInit {
     text: true,
     table: true,
   };
+  subscriptions: Subscription[] = [];
 
   constructor(
+    private stateService: StateService,
     private comparison: ComparisonService,
     private log: LogService,
+    private utils: UtilsService,
     private appService: AppService,
     private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.appService.loading$.subscribe(loading => {
-      if (loading) {
-        this.disableButtons = {
-          all: true,
-          text: true,
-          table: true,
-        };
-      } else {
-        this.updateDisabledButtons();
-      }
+    this.subscriptions.push(
+      this.appService.loading$.subscribe(loading => {
+        if (loading) {
+          this.disableButtons = {
+            all: true,
+            text: true,
+            table: true,
+          };
+        } else {
+          this.updateDisabledButtons();
+        }
+        this.cd.detectChanges();
+      })
+    );
+    if (this.stateService.restoreState('compareFiles', this)) {
       this.cd.detectChanges();
-    });
+    }
   }
 
-  ngAfterViewInit() {
-    this.calculateContentHeight();
+  ngOnDestroy() {
+    this.stateService.setState('compareFiles', {
+      left: this.left,
+      right: this.right,
+      tableDiffMetadata: this.tableDiffMetadata,
+      matchedRows: this.matchedRows,
+      compareActive: this.compareActive,
+      compareType: this.compareType,
+      allowedCompareTypes: this.allowedCompareTypes,
+      settings: this.settings,
+      disableButtons: this.disableButtons,
+    });
+    this.utils.unsubscribeAll(this.subscriptions);
   }
 
   onSettingsChanged(settings: CompareSettings) {
@@ -102,6 +110,7 @@ export class FileCompareComponent implements OnInit, AfterViewInit {
             mapping: this.settings.mapping,
             keyIgnoreCase: this.settings.keyIgnoreCase,
           });
+          this.appService.setFooterItems([]);
         } catch (ex) {
           this.log.debug('Error comparing', ex);
         }
@@ -110,7 +119,8 @@ export class FileCompareComponent implements OnInit, AfterViewInit {
       }
     } else {
       // TODO: store text variables somewhere
-      // can use ngTextDiff
+      this.compareActive = true;
+      this.appService.loading = false;
     }
   }
 
@@ -147,18 +157,5 @@ export class FileCompareComponent implements OnInit, AfterViewInit {
         };
       }
     });
-  }
-
-  @HostListener('window:resize', ['$event'])
-  onResize() {
-    this.calculateContentHeight();
-  }
-
-  calculateContentHeight() {
-    this.contentHeight =
-      window.innerHeight -
-      this.parentContentHeight -
-      this.header.nativeElement.clientHeight -
-      this.contentConfig.nativeElement.clientHeight;
   }
 }

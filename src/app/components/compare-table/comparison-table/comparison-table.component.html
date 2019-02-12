@@ -1,7 +1,7 @@
 
 <span class="diff-table">
 
-  <div class="p-grid grid-container" [ngStyle]="containerStyle">
+  <div class="p-grid grid-container" appCalculateHeight>
       <div class="p-col grid-container-col" id="left-compare-table-container" appContainer cdkScrollable>
         <!-- LEFT -->
         <table cdk-table [dataSource]="rows" [trackBy]="trackBy">

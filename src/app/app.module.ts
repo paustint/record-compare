@@ -23,6 +23,8 @@ import { AppSharedModule } from './shared/app.shared.module';
 import { CompareTableContainerComponent } from './components/compare-table/compare-table-container.component';
 import { FileCompareComponent } from './components/file-compare/file-compare.component';
 import { TextCompareComponent } from './components/text-compare/text-compare.component';
+import { StoreModule } from '@ngrx/store';
+import { CalculateHeightDirective } from './directives/calculate-height.directive';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -41,6 +43,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CompareTableContainerComponent,
     FileCompareComponent,
     TextCompareComponent,
+    CalculateHeightDirective,
   ],
   imports: [
     AppSharedModule,

@@ -2,10 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LogService } from '../../providers/log.service';
 
-const TAB_HEIGHT = 37;
-const FOOTER_HEIGHT = 50;
-const OTHER_HEIGHT = 50;
-
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -17,7 +13,6 @@ export class HomeComponent implements OnInit {
     { id: 'compareText', label: 'Compare Text', icon: 'font', command: this.changeActiveItem.bind(this) },
   ];
   activeMenuItem: MenuItem;
-  contentHeight = TAB_HEIGHT + FOOTER_HEIGHT + OTHER_HEIGHT;
 
   constructor(private log: LogService) {}
 

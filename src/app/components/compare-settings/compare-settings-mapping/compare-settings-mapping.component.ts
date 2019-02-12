@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CompareSettingsMappingService } from './compare-settings-mapping.service';
 import { LogService } from '../../../providers/log.service';
-import { MatchedItemRow } from '../../../models';
+import { MappedHeadingItemRow } from '../../../models';
 
 @Component({
   selector: 'app-compare-settings-mapping',
@@ -14,7 +14,6 @@ export class CompareSettingsMappingComponent implements OnInit {
   @Input()
   set leftHeaders(leftHeaders: string[]) {
     this._leftHeaders = leftHeaders;
-    this.mappedHeaders = [];
     this.mapColumns();
   }
   get leftHeaders() {
@@ -23,27 +22,31 @@ export class CompareSettingsMappingComponent implements OnInit {
   @Input()
   set rightHeaders(rightHeaders: string[]) {
     this._rightHeaders = rightHeaders;
-    this.mappedHeaders = [];
     this.mapColumns();
   }
   get rightHeaders() {
     return this._rightHeaders || [];
   }
   @Input() disabled = false;
-  @Output() mapped = new EventEmitter<MatchedItemRow[]>();
+  @Input() mappedHeaders: MappedHeadingItemRow[];
+  @Output() mapped = new EventEmitter<MappedHeadingItemRow[]>();
 
   active = false;
   columns = ['Left Field', 'Right Field'];
-  mappedHeaders: MatchedItemRow[] = [];
+  isInit = false;
 
   constructor(private mappingService: CompareSettingsMappingService, private log: LogService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.isInit = true;
+  }
 
   mapColumns() {
-    this.mappedHeaders = this.mappingService.autoMap(this.leftHeaders, this.rightHeaders);
-    this.log.debug('mappedHeaders', this.mappedHeaders);
-    this.mapped.emit(this.mappedHeaders);
+    if (this.isInit) {
+      this.mappedHeaders = this.mappingService.autoMap(this.leftHeaders, this.rightHeaders);
+      this.log.debug('mappedHeaders', this.mappedHeaders);
+      this.mapped.emit(this.mappedHeaders);
+    }
   }
 
   onActive() {

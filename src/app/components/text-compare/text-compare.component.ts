@@ -1,4 +1,5 @@
-import { Component, OnInit, Input, HostListener, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { StateService } from '../../providers/state.service';
 
 const NUM_ROWS_INIT = 30;
 const NUM_ROWS_COMAPRE_ACTIVE = 5;
@@ -8,25 +9,27 @@ const NUM_ROWS_COMAPRE_ACTIVE = 5;
   templateUrl: './text-compare.component.html',
   styleUrls: ['./text-compare.component.scss'],
 })
-export class TextCompareComponent implements OnInit, AfterViewInit {
-  @ViewChild('topContent') topContent: ElementRef<HTMLDivElement>;
-  @Input() parentContentHeight = 0;
-  contentHeight: number;
+export class TextCompareComponent implements OnInit, OnDestroy {
   left: string;
   right: string;
   numRows = NUM_ROWS_INIT;
   compareActive = false;
 
-  containerStyle = {
-    height: '500px',
-  };
+  constructor(private stateService: StateService, private cd: ChangeDetectorRef) {}
 
-  constructor() {}
+  ngOnInit() {
+    if (this.stateService.restoreState('compareText', this)) {
+      this.cd.detectChanges();
+    }
+  }
 
-  ngOnInit() {}
-
-  ngAfterViewInit() {
-    this.calculateContentHeight();
+  ngOnDestroy() {
+    this.stateService.setState('compareText', {
+      left: this.left,
+      right: this.right,
+      numRows: this.numRows,
+      compareActive: this.compareActive,
+    });
   }
 
   textFocus() {
@@ -37,18 +40,5 @@ export class TextCompareComponent implements OnInit, AfterViewInit {
   compare() {
     this.compareActive = true;
     this.numRows = NUM_ROWS_COMAPRE_ACTIVE;
-    setTimeout(() => {
-      this.calculateContentHeight();
-    });
-  }
-
-  @HostListener('window:resize', ['$event'])
-  onResize() {
-    this.calculateContentHeight();
-  }
-
-  calculateContentHeight() {
-    this.contentHeight = window.innerHeight - this.parentContentHeight - this.topContent.nativeElement.clientHeight;
-    this.containerStyle.height = `${this.contentHeight}px`;
   }
 }

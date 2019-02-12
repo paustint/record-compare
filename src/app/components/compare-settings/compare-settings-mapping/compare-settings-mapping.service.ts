@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MatchedItemRow } from '../../../models';
+import { MappedHeadingItemRow } from '../../../models';
 import { SelectItem } from 'primeng/api';
 
 interface NormalizedItems {
@@ -21,7 +21,7 @@ interface NormalizedItems {
 export class CompareSettingsMappingService {
   constructor() {}
 
-  autoMap(leftHeaders: string[], rightHeaders: string[]): MatchedItemRow[] {
+  autoMap(leftHeaders: string[], rightHeaders: string[]): MappedHeadingItemRow[] {
     const normalizedItems = this.getNormalizedItems(leftHeaders, rightHeaders);
     const options = rightHeaders.map(item => ({ label: item, value: item }));
     return this.matchNormalizedItems(leftHeaders, normalizedItems, options);
@@ -51,8 +51,8 @@ export class CompareSettingsMappingService {
     return normalizedItems;
   }
 
-  private matchNormalizedItems(leftHeaders: string[], normalizedItems: NormalizedItems, options: SelectItem[]): MatchedItemRow[] {
-    const rows: MatchedItemRow[] = [];
+  private matchNormalizedItems(leftHeaders: string[], normalizedItems: NormalizedItems, options: SelectItem[]): MappedHeadingItemRow[] {
+    const rows: MappedHeadingItemRow[] = [];
     leftHeaders.forEach(item => {
       if (normalizedItems.right.default[normalizedItems.left[item].default]) {
         // EXACT MATCH

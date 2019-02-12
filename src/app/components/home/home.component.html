@@ -13,8 +13,8 @@
   </div>
 
   <div [ngSwitch]="activeMenuItem.id">
-      <app-file-compare *ngSwitchCase="'compareFiles'" [parentContentHeight]="contentHeight"></app-file-compare>
-      <app-text-compare *ngSwitchCase="'compareText'" [parentContentHeight]="contentHeight"></app-text-compare>
+      <app-file-compare *ngSwitchCase="'compareFiles'"></app-file-compare>
+      <app-text-compare *ngSwitchCase="'compareText'"></app-text-compare>
   </div>
 
   <!-- footer -->

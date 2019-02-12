@@ -40,6 +40,7 @@ export interface CompareSettings {
   mapping: {
     [source: string]: string;
   };
+  mappedHeaders: MappedHeadingItemRow[];
   keyIgnoreCase: boolean;
   compareIgnoreCase: boolean;
 }
@@ -219,10 +220,17 @@ export interface MatchRowsItemContent {
   hasDiff: boolean;
 }
 
-export interface MatchedItemRow {
+export interface MappedHeadingItemRow {
   left: string;
   right?: string;
   options: SelectItem[];
   autoMatched: boolean;
   autoMatchedType?: 'default' | 'lowercase' | 'removeSpecial';
+}
+
+export interface ComponentState {
+  compareFiles: { [classPropertyName: string]: any };
+  compareFilesTable: { [classPropertyName: string]: any };
+  compareFilesSettings: { [classPropertyName: string]: any };
+  compareText: { [classPropertyName: string]: any };
 }

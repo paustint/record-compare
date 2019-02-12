@@ -10,7 +10,7 @@
       </div>
     </div>
 
-  <div #paginationDiv class="m-2">
+  <div class="m-2">
     <p-paginator
       [first]="pagination.page * pagination.pageSize"
       [rows]="pagination.pageSize"
@@ -26,7 +26,6 @@
     [headers]="visibleHeaders"
     [rows]="visibleRows"
     [scrollSync]="scrollSync"
-    [maxHeight]="contentHeight"
   ></app-comparison-table>
 
 </div>

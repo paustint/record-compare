@@ -8,6 +8,7 @@
       <app-compare-settings-key
         [leftHeaders]="leftHeaders"
         [rightHeaders]="rightHeaders"
+        [selectedHeaders]="settings.keys"
         [disabled]="disabled || type !== 'table'"
         (save)="onSaveKeys($event)"
       ></app-compare-settings-key>
@@ -16,6 +17,7 @@
       <app-compare-settings-mapping
         [leftHeaders]="leftHeaders"
         [rightHeaders]="rightHeaders"
+        [mappedHeaders]="settings.mappedHeaders"
         [disabled]="disabled || type !== 'table'"
         (mapped)="onFieldsMapped($event)"
       ></app-compare-settings-mapping>

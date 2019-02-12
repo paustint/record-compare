@@ -17,6 +17,10 @@
   - [x] On page size change, if on last page, then the records shown are not the correct records
   - [ ] IF files are dragged in, then the buttons do not enable
   - [ ] row heights do not line up and cause scrolling to be out of whack
+  - [ ] value changed after it was chcked (for some files)
+  - [ ] error loading small CSV test file and XLSX (worker throws exception)
+  - [ ] Most CSV (or all) have a header changed after it was checked error
+  - [x] Performing another comparison does not clear out footer from prior comparison
 - MISC
   - [ ] Create types for binaryjs
 - APP

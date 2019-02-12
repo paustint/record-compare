@@ -17,7 +17,14 @@ import { UtilsService } from '../../providers/utils.service';
 export class FileLoaderComponent implements OnInit {
   @Input() heading = 'Source File';
   @Output() fileContents = new EventEmitter<FileContentsEvent>();
-
+  @Input()
+  set file(fileEv: FileContentsEvent) {
+    if (fileEv) {
+      this.fileStat = fileEv.fileStat;
+      this.filename = fileEv.filename;
+      this.type = fileEv.type;
+    }
+  }
   filename: string;
   fileStat: FileStat | undefined;
   type: FileType;

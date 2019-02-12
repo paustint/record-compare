@@ -20,6 +20,7 @@ export class CompareSettingsKeyComponent implements OnInit {
     this.setHeaders();
   }
   @Input() disabled = false;
+  @Input() selectedHeaders: string[];
   @Output() save = new EventEmitter<{ keys: string[] }>();
   @Output() close = new EventEmitter<void>();
 
@@ -28,7 +29,6 @@ export class CompareSettingsKeyComponent implements OnInit {
 
   active = false;
   headers: SelectItem[];
-  selectedHeaders: string[] = [];
 
   constructor(private keyService: CompareSettingsKeyService, private log: LogService) {}
 
@@ -40,10 +40,17 @@ export class CompareSettingsKeyComponent implements OnInit {
   setHeaders() {
     this.headers = this.keyService.mapHeadersToSelectedItem(this._leftHeaders, this._rightHeaders);
     // reset selected headers if content changes
-    this.selectedHeaders = [];
-    this.keyService.selectedKeys = this.selectedHeaders;
-    this.save.emit({ keys: this.keyService.selectedKeys });
-    this.keyService.setDisabledItems(this.headers, this.selectedHeaders);
+    if (Array.isArray(this.selectedHeaders)) {
+      const headerValues = this.headers.map(header => header.value);
+      // If any of the selected headers don't exist in new headers, reset selected headers
+      // This ensures that on a restored state, the selections are retained
+      if (!this.selectedHeaders.every(header => headerValues.includes(header))) {
+        this.selectedHeaders = [];
+        this.keyService.selectedKeys = this.selectedHeaders;
+        this.save.emit({ keys: this.keyService.selectedKeys });
+        this.keyService.setDisabledItems(this.headers, this.selectedHeaders);
+      }
+    }
   }
 
   onActive() {

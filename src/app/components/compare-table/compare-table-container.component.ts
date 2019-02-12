@@ -1,9 +1,11 @@
-import { Component, OnInit, Input, ViewChildren, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { ComparisonService } from '../../providers/comparison.service';
 import { ComparisonRow, Pagination, MatchRowsOutput, TableHeader } from '../../models';
-import { NOOP } from '../../constants';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
+import { StateService } from '../../providers/state.service';
+import { Subscription } from 'rxjs';
+import { UtilsService } from '../../providers/utils.service';
 
 interface TableOption {
   name: OptionName;
@@ -19,24 +21,13 @@ type OptionName = 'scrollSync' | 'hideMatchingRows' | 'hideMatchingCols';
   templateUrl: './compare-table-container.component.html',
   styleUrls: ['./compare-table-container.component.scss'],
 })
-export class CompareTableContainerComponent implements OnInit {
-  @ViewChild('paginationDiv') paginationDiv: ElementRef<HTMLDivElement>;
-  _contentHeight: number;
-  @Input()
-  set contentHeight(contentHeight: number) {
-    this._contentHeight = contentHeight;
-  }
-  get contentHeight() {
-    return this.calculateContentHeight();
-  }
-
+export class CompareTableContainerComponent implements OnInit, OnDestroy {
   compareResults: MatchRowsOutput;
   headers: TableHeader[];
   visibleHeaders: TableHeader[];
   rows: ComparisonRow[];
   visibleRows: ComparisonRow[];
   pagination: Pagination;
-  paginationDivHeight = 35;
   scrollSync = true;
   hideMatchingRows = false;
   options: TableOption[] = [
@@ -44,29 +35,53 @@ export class CompareTableContainerComponent implements OnInit {
     { name: 'hideMatchingRows', label: 'Hide Matching Rows', value: false, action: this.applyFilters.bind(this) },
     { name: 'hideMatchingCols', label: 'Hide Matching Columns', value: false, action: this.applyFilters.bind(this) },
   ];
+  subscriptions: Subscription[] = [];
 
-  constructor(private comparisonService: ComparisonService, private log: LogService, private appService: AppService) {
-    this.comparisonService.headers$.subscribe(headers => (this.headers = headers));
-    this.comparisonService.rows$.subscribe(rows => {
-      if (this.compareResults !== this.comparisonService.currentCompareResults) {
-        this.compareResults = this.comparisonService.currentCompareResults;
-        this.applyFooters();
-      }
-      this.rows = rows;
-      this.applyFilters();
-    });
-    this.comparisonService.pagination$.subscribe(pagination => (this.pagination = pagination));
+  constructor(
+    private stateService: StateService,
+    private comparisonService: ComparisonService,
+    private log: LogService,
+    private appService: AppService,
+    private utils: UtilsService,
+    private cd: ChangeDetectorRef
+  ) {
+    this.stateService.restoreState('compareFilesTable', this);
+    this.subscriptions.push(this.comparisonService.headers$.subscribe(headers => (this.headers = headers)));
+    this.subscriptions.push(
+      this.comparisonService.rows$.subscribe(rows => {
+        if (this.compareResults !== this.comparisonService.currentCompareResults) {
+          this.compareResults = this.comparisonService.currentCompareResults;
+          this.applyFooters();
+        }
+        this.rows = rows;
+        this.applyFilters();
+      })
+    );
+    this.subscriptions.push(this.comparisonService.pagination$.subscribe(pagination => (this.pagination = pagination)));
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // if (this.stateService.restoreState('compareFilesTable', this)) {
+    //   this.cd.detectChanges();
+    // }
+  }
+
+  ngOnDestroy() {
+    this.stateService.setState('compareFilesTable', {
+      compareResults: this.compareResults,
+      headers: this.headers,
+      visibleHeaders: this.visibleHeaders,
+      rows: this.rows,
+      visibleRows: this.visibleRows,
+      pagination: this.pagination,
+      scrollSync: this.scrollSync,
+      hideMatchingRows: this.hideMatchingRows,
+    });
+    this.utils.unsubscribeAll(this.subscriptions);
+  }
 
   paginate(ev: { first: number; rows: number; page: number; pageCount: number }) {
     this.comparisonService.paginate(ev.page, ev.rows);
-  }
-
-  calculateContentHeight() {
-    const paginationHeight = this.paginationDiv ? this.paginationDiv.nativeElement.clientHeight : 35;
-    return Math.max((this._contentHeight || 0) - paginationHeight, 300);
   }
 
   onOptionChange(option: TableOption) {

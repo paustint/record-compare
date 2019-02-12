@@ -42,16 +42,8 @@ export class ComparisonTableCdkComponent implements OnInit, AfterViewInit, OnDes
   }
   @Input() compareResults: MatchRowsOutput;
   @Input() rows: ComparisonRow[];
-  @Input()
-  set maxHeight(height: number) {
-    this.containerStyle.height = `${height}px`;
-  }
 
   scroll$: Subscription;
-
-  containerStyle = {
-    height: '500px',
-  };
 
   constructor(private scrollService: ScrollDispatcher, private log: LogService, private appService: AppService) {}
 

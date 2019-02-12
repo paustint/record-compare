@@ -100,6 +100,16 @@ try {
     }
   });
 
+  // https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
+  app.on('web-contents-created', (webContentsEvent, contents) => {
+    contents.on('will-navigate', (event, navigationUrl) => {
+      const parsedUrl = new url.URL(navigationUrl);
+      if (parsedUrl.origin !== 'http://localhost') {
+        event.preventDefault();
+      }
+    });
+  });
+
   app.on('activate', () => {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.

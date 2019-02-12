@@ -1,13 +1,14 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CompareType, CompareSettings, OtherCompareTypes, MatchedItemRow } from '../../models';
+import { Component, OnInit, Input, Output, EventEmitter, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { CompareType, CompareSettings, OtherCompareTypes, MappedHeadingItemRow } from '../../models';
 import { SelectItem } from 'primeng/api';
+import { StateService } from '../../providers/state.service';
 
 @Component({
   selector: 'app-compare-settings',
   templateUrl: './compare-settings.component.html',
   styleUrls: ['./compare-settings.component.scss'],
 })
-export class CompareSettingsComponent implements OnInit {
+export class CompareSettingsComponent implements OnInit, OnDestroy {
   @Input() key: string;
   @Input() leftHeaders: string[] = [];
   @Input() rightHeaders: string[] = [];
@@ -30,13 +31,25 @@ export class CompareSettingsComponent implements OnInit {
   settings: CompareSettings = {
     keys: [],
     mapping: {},
+    mappedHeaders: [],
     keyIgnoreCase: false,
     compareIgnoreCase: false,
   };
 
-  constructor() {}
+  constructor(private stateService: StateService, private cd: ChangeDetectorRef) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    if (this.stateService.restoreState('compareFilesSettings', this)) {
+      this.cd.detectChanges();
+    }
+  }
+
+  ngOnDestroy() {
+    this.stateService.setState('compareFilesSettings', {
+      settings: this.settings,
+      selectedOtherSettings: this.selectedOtherSettings,
+    });
+  }
 
   showKeyModal() {
     this.activeModals.key = true;
@@ -57,8 +70,9 @@ export class CompareSettingsComponent implements OnInit {
     this.settingsChanged.emit(this.settings);
   }
 
-  onFieldsMapped(matchedItems: MatchedItemRow[]) {
-    this.settings.mapping = matchedItems.reduce((mappings: { [left: string]: string }, item) => {
+  onFieldsMapped(mappedHeaders: MappedHeadingItemRow[]) {
+    this.settings.mappedHeaders = mappedHeaders;
+    this.settings.mapping = mappedHeaders.reduce((mappings: { [left: string]: string }, item) => {
       if (item.right) {
         mappings[item.left] = item.right;
       }
