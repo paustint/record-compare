@@ -68,7 +68,7 @@ export class CompareSettingsKeyComponent implements OnInit {
     this.active = false;
   }
 
-  onChange(ev: any) {
+  onChange() {
     this.keyService.setDisabledItems(this.headers, this.selectedHeaders);
   }
 

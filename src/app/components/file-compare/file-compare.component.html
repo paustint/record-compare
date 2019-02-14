@@ -19,8 +19,8 @@
     <div class="p-grid px-2" #contentConfig>
         <div class="p-col-fixed settings">
             <app-compare-settings
-              [leftHeaders]="left?.headers"
-              [rightHeaders]="right?.headers"
+              [leftHeaders]="getHeaders(left)"
+              [rightHeaders]="getHeaders(right)"
               [disabled]="!left || !right"
               [type]="compareType"
               (settingsChanged)="onSettingsChanged($event)"

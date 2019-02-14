@@ -4,7 +4,6 @@
     "outDir": "../dist",
     "module": "commonjs",
     "baseUrl": "",
-    "watch": true,
     "preserveWatchOutput": true,
     "types": []
   },

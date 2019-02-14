@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { FileContentsEvent, DiffMetadata, MatchRows, CompareType, CompareSettings, LeftRight } from '../../models';
+import { FileContentsEvent, DiffMetadata, MatchRows, CompareType, CompareSettings, LeftRight, FileContentsEventCsv } from '../../models';
 import { ComparisonService } from '../../providers/comparison.service';
 import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
@@ -131,6 +131,12 @@ export class FileCompareComponent implements OnInit, OnDestroy {
       }
     }
     return false;
+  }
+
+  getHeaders(leftOrRight: FileContentsEvent) {
+    if (leftOrRight && (leftOrRight as FileContentsEventCsv).headers) {
+      return (leftOrRight as FileContentsEventCsv).headers;
+    }
   }
 
   updateDisabledButtons(compareType?: CompareType): void {
