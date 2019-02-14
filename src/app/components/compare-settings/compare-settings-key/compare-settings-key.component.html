@@ -1,7 +1,11 @@
 <button
   pButton
   type="button"
-  class=""
+  class="ui-button-raised ui-button-secondary"
+  [ngClass]="{
+    'ui-button-warning': !disabled && (!selectedHeaders || selectedHeaders.length === 0),
+    'ui-button-success': !disabled && selectedHeaders?.length > 0
+  }"
   label="Set Key"
   icon="pi pi-key"
   iconPos="right"

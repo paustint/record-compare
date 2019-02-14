@@ -70,7 +70,9 @@ export class FileLoaderComponent implements OnInit {
   }
 
   public openFileDialog() {
-    const filePath = this.electronService.dialog.showOpenDialog({ properties: ['openFile', 'createDirectory'] });
+    const filePath = this.electronService.dialog.showOpenDialog(this.electronService.remote.getCurrentWindow(), {
+      properties: ['openFile', 'createDirectory'],
+    });
     this.readFile(filePath);
   }
 

@@ -5,6 +5,7 @@ import { WorkerConfig, WorkerEvent, WorkerEventName, FileContentsEvent } from '.
 import * as fs from 'fs-extra';
 import * as moment from 'moment';
 import { join } from 'path';
+import { ExportComparisonTableToXlsx } from './exports/export-to-file';
 
 const WORKER_MESSAGE_EV = 'WORKER_MESSAGE';
 const WORKER_RESPONSE_EV = 'WORKER_RESPONSE';
@@ -16,6 +17,7 @@ const config: WorkerConfig = {
   tempPath: ipcRenderer.sendSync(GET_PATH, 'temp'),
   eventMap: {
     COMPARE_TABLE: compareTableData,
+    EXPORT_COMPARISON: exportComparison,
   },
 };
 
@@ -74,5 +76,14 @@ async function compareTableData(
   sendRendererMessage({
     name,
     payload: matchRowsOutput,
+  });
+}
+
+async function exportComparison(name: WorkerEventName, payload: { inputFilename: string; outputFilename: string }) {
+  const exportComparisonTable = new ExportComparisonTableToXlsx(payload.inputFilename, payload.outputFilename);
+  await exportComparisonTable.generateExport();
+  sendRendererMessage({
+    name,
+    payload: {},
   });
 }

@@ -16,20 +16,22 @@ export class CompareButtonsComponent implements OnInit, OnChanges {
     {
       name: 'text',
       label: 'Compare as Text',
-      class: '',
+      class: 'ui-button-raised',
       disabled: false,
       icon: 'pi pi-file',
       iconPos: 'right',
       action: this.onClickCompare.bind(this),
+      tooltip: () => null,
     },
     {
       name: 'table',
       label: 'Compare as Table',
-      class: '',
+      class: 'ui-button-raised',
       disabled: false,
       icon: 'pi pi-table',
       iconPos: 'right',
       action: this.onClickCompare.bind(this),
+      tooltip: (disabled: boolean) => (disabled ? 'Configure a key and field mapping to enable table comparison.' : null),
     },
   ];
 

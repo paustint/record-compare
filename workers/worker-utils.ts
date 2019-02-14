@@ -7,6 +7,8 @@ import * as _ from 'lodash';
 import { MatchType, MatchRowsItemContent } from '../src/app/models';
 import { byteLength } from 'byte-length';
 
+const stripHtmlRegex = /<[^>]+>/g;
+
 export const FILETYPE_REGEX = {
   CSV: /\.csv$/i,
   XLSX: /\.(xls|xlsx)$/i,
@@ -144,4 +146,9 @@ export async function parseFile(fileData: FileContentsEvent): Promise<FileConten
   } catch (ex) {
     console.log('Error reading file', ex);
   }
+}
+
+export function stripHtml(val: string): string {
+  val = val || '';
+  return val.replace(stripHtmlRegex, '');
 }

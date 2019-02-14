@@ -30,6 +30,7 @@ export class ElectronService {
     workerId: null,
   };
   tempPath: string;
+  downloadsPath: string;
 
   private workerEvents = new Subject<WorkerEvent<any>>();
   workerEvents$ = this.workerEvents.asObservable();
@@ -57,8 +58,10 @@ export class ElectronService {
   private initEvents() {
     this.windowIds = ipcRenderer.sendSync(IPC_EVENT_NAMES.GET_WINDOW_IDS);
     this.tempPath = ipcRenderer.sendSync(IPC_EVENT_NAMES.GET_PATH, 'temp');
+    this.downloadsPath = ipcRenderer.sendSync(IPC_EVENT_NAMES.GET_PATH, 'downloads');
     this.log.debug('windowIds', this.windowIds);
     this.log.debug('tempPath', this.tempPath);
+    this.log.debug('downloadsPath', this.downloadsPath);
     this.handleWorkerEvents();
   }
 

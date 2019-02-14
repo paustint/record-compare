@@ -1,14 +1,16 @@
-
-
 <div *ngIf="rows?.length > 0">
-
-    <div class="p-grid options-row mx-2">
-      <div class="p-col">
-        <span *ngFor="let option of options" class="mr-2">
-          <p-checkbox [ngModel]="option.value" (ngModelChange)="onOptionChange(option)" binary="true" [label]="option.label"></p-checkbox>
-        </span>
+  <div class="p-grid options-row mx-2">
+    <div class="p-col">
+      <span *ngFor="let option of options" class="mr-2">
+        <p-checkbox [ngModel]="option.value" (ngModelChange)="onOptionChange(option)" binary="true" [label]="option.label"></p-checkbox>
+      </span>
+    </div>
+    <div class="p-col-fixed">
+      <div>
+        <button pButton class="ui-button-raised ui-button-secondary" type="button" icon="pi pi-file" iconPos="right" (click)="saveFile()" label="Export Results"></button>
       </div>
     </div>
+  </div>
 
   <div class="m-2">
     <p-paginator
@@ -27,6 +29,4 @@
     [rows]="visibleRows"
     [scrollSync]="scrollSync"
   ></app-comparison-table>
-
 </div>
-

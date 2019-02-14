@@ -8,7 +8,7 @@ export interface Pagination {
   pageSize: number;
 }
 
-export type WorkerEventName = 'COMPARE_TABLE';
+export type WorkerEventName = 'COMPARE_TABLE' | 'EXPORT_COMPARISON';
 
 export interface WorkerEvent<T> {
   name: WorkerEventName;
@@ -62,6 +62,7 @@ export interface CompareButton {
   icon?: string;
   iconPos?: string;
   action: Function;
+  tooltip: (val?: boolean) => string | undefined | null;
 }
 
 export interface FileStat {

@@ -22,6 +22,10 @@ function createWindow() {
     height: size.height,
     minHeight: 900,
     minWidth: 900,
+    webPreferences: {
+      nodeIntegration: true,
+      textAreasAreResizable: false,
+    },
   });
 
   if (serve) {

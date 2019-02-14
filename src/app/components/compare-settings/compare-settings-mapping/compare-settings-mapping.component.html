@@ -1,7 +1,11 @@
 <button
   pButton
   type="button"
-  class=""
+  class="ui-button-raised ui-button-secondary"
+  [ngClass]="{
+    'ui-button-warning': !disabled && (!mappedHeaders || mappedHeaders.length === 0),
+    'ui-button-success': !disabled && mappedHeaders?.length > 0
+  }"
   label="Configure Mapping"
   icon="pi pi-sitemap"
   iconPos="right"

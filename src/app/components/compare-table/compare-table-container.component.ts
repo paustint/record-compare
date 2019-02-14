@@ -6,6 +6,7 @@ import { AppService } from '../../providers/app.service';
 import { StateService } from '../../providers/state.service';
 import { Subscription } from 'rxjs';
 import { UtilsService } from '../../providers/utils.service';
+import { ElectronService } from '../../providers/electron.service';
 
 interface TableOption {
   name: OptionName;
@@ -43,6 +44,7 @@ export class CompareTableContainerComponent implements OnInit, OnDestroy {
     private log: LogService,
     private appService: AppService,
     private utils: UtilsService,
+    private electron: ElectronService,
     private cd: ChangeDetectorRef
   ) {
     this.stateService.restoreState('compareFilesTable', this);
@@ -87,6 +89,22 @@ export class CompareTableContainerComponent implements OnInit, OnDestroy {
   onOptionChange(option: TableOption) {
     option.value = !option.value;
     option.action();
+  }
+
+  async saveFile() {
+    this.appService.loading = true;
+    const outputFilename = this.electron.dialog.showSaveDialog(this.electron.remote.getCurrentWindow(), {
+      title: 'Save File Export',
+      defaultPath: this.electron.path.join(this.electron.downloadsPath, 'record-compare-export.xlsx'),
+      filters: [{ name: 'Spreadsheets', extensions: ['xlsx'] }],
+    });
+
+    await this.electron.sendEventToWorker('EXPORT_COMPARISON', {
+      inputFilename: this.compareResults.files.comparison,
+      outputFilename,
+    });
+    this.appService.loading = false;
+    this.electron.remote.shell.openItem(outputFilename);
   }
 
   applyScrollsync() {

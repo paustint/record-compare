@@ -2,5 +2,7 @@
   "cSpell.words": [
     "defval"
   ],
-  "cSpell.enabled": false
+  "cSpell.enabled": false,
+  "editor.formatOnSave": true,
+  "html.format.enable": false
 }

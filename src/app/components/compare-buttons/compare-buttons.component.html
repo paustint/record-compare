@@ -4,11 +4,11 @@
       Run Comparison
     </p-header>
     <div class="p-grid pb-1">
-      <div class="p-col-fixed mr-2 p-0" *ngFor="let btn of buttons">
+      <div class="p-col-fixed mr-2 p-0" *ngFor="let btn of buttons" [pTooltip]="btn.tooltip(btn.disabled)" tooltipPosition="top">
           <button
             pButton
             type="button"
-            [class]="btn.class"
+            [ngClass]="btn.class"
             [label]="btn.label"
             [icon]="btn.icon"
             [iconPos]="btn.iconPos"
