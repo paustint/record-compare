@@ -100,6 +100,7 @@ export class FileCompareComponent implements OnInit, OnDestroy {
   }
 
   async onCompare(compareType: CompareType) {
+    this.appService.clearError();
     this.appService.loading = true;
     this.compareType = compareType;
     if (compareType === 'table') {

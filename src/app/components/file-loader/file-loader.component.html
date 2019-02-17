@@ -3,6 +3,9 @@
 <!-- <label [attr.for]="id" class="md-button md-raised md-primary">{{label}}</label> -->
 <div (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="dropFiles($event)" [ngClass]="{'dragging-active': dragOverActive}">
   <span class="file-heading">{{heading}}</span>
+  <span *ngIf="errorMessage" class="pl-2 text-danger" [pTooltip]="errorMessage">
+    <fa-icon [icon]="['fal', 'exclamation-circle']"></fa-icon>
+  </span>
   <div class="ui-inputgroup pointer" (click)="openFileDialog()" [pTooltip]="filename" tooltipPosition="bottom" tooltipStyleClass="break-word">
     <input class="filename-container pointer" type="text" pInputText [disabled]="true" [(ngModel)]="filename"/>
     <button pButton type="button" icon="pi pi-folder-open" iconPos="left" (click)="openFileDialog()"></button>

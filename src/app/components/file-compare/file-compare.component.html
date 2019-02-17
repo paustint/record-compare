@@ -34,6 +34,9 @@
               (compare)="onCompare($event)"
             ></app-compare-buttons>
         </div>
+        <div class="p-col mt-auto mb-auto">
+          <app-error></app-error>
+        </div>
     </div>
 
       <div *ngIf="compareActive && compareType === 'text'">

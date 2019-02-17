@@ -80,23 +80,22 @@ export class ElectronService {
       ipcRenderer.sendTo(this.windowIds.workerId, IPC_EVENT_NAMES.WORKER_MESSAGE_EV, { name, payload });
 
       if (waitForResponse) {
-        const subscription = this.workerEvents$
-          .pipe(
-            filter(event => event.name === name),
-            map(event => event.payload)
-          )
-          .subscribe(
-            (results: T) => {
-              subscription.unsubscribe();
-              resolve(results);
-            },
-            err => {
-              subscription.unsubscribe();
-              this.log.error('Error comparing', err);
-              reject(err);
-            },
-            () => {}
-          );
+        const subscription = this.workerEvents$.pipe(filter(event => event.name === name)).subscribe(
+          results => {
+            subscription.unsubscribe();
+            if (results.error) {
+              reject(results.error);
+            } else {
+              resolve(results.payload);
+            }
+          },
+          err => {
+            subscription.unsubscribe();
+            this.log.error('Error comparing', err);
+            reject(err);
+          },
+          () => {}
+        );
       } else {
         resolve();
       }

@@ -1,10 +1,15 @@
 {
-  "productName": "angular-electron",
+  "appId": "com.electron.record.compare.app",
+  "productName": "record-compare",
+  "copyright": "Copyright © year Austin Turner",
   "directories": {
     "output": "release/"
   },
     "files": [
         "**/*",
+        "assets/icons/mac/*.*",
+        "assets/icons/png/*.*",
+        "assets/icons/win/*.*",
         "!**/*.ts",
         "!*.code-workspace",
         "!LICENSE.md",

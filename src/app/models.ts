@@ -8,10 +8,22 @@ export interface Pagination {
   pageSize: number;
 }
 
+export interface AppError {
+  name: WorkerEventName;
+  error: WorkerError;
+}
+
+export interface WorkerError {
+  name: string;
+  message: string;
+  data?: any;
+}
+
 export type WorkerEventName = 'COMPARE_TABLE' | 'EXPORT_COMPARISON';
 
 export interface WorkerEvent<T> {
   name: WorkerEventName;
+  error?: WorkerError;
   payload: T;
 }
 

@@ -2,6 +2,12 @@ export type WorkerEventName = 'COMPARE_TABLE' | 'EXPORT_COMPARISON';
 
 export type WorkerFn = (name: string, payload: any, useWsStream?: boolean) => void;
 
+export interface WorkerError {
+  name: string;
+  message: string;
+  data?: any;
+}
+
 export interface WorkerConfig {
   windowIds: {
     renderWindowId: number | null;
@@ -13,6 +19,7 @@ export interface WorkerConfig {
 
 export interface WorkerEvent {
   name: WorkerEventName;
+  error?: WorkerError;
   payload: any;
 }
 

@@ -1,5 +1,6 @@
 import { Directive, ElementRef, OnDestroy, HostListener, Input } from '@angular/core';
 import { LogService } from '../providers/log.service';
+import { Subject } from 'rxjs';
 
 @Directive({
   selector: '[appCalculateHeight]',
@@ -9,6 +10,10 @@ export class CalculateHeightDirective implements OnDestroy {
   private element: HTMLElement;
   private top: number;
   private observer: MutationObserver;
+  public maxHeight: number;
+
+  private onHeightChange = new Subject<number>();
+  public onHeightChange$ = this.onHeightChange.asObservable();
 
   constructor(_el: ElementRef, private log: LogService) {
     this.element = _el.nativeElement;
@@ -33,6 +38,7 @@ export class CalculateHeightDirective implements OnDestroy {
 
   ngOnDestroy(): void {
     this.observer.disconnect();
+    this.onHeightChange.complete();
   }
 
   @HostListener('window:resize', ['$event'])
@@ -49,9 +55,11 @@ export class CalculateHeightDirective implements OnDestroy {
     const elementMarginBottom = this.footerHeight;
     const maxHeight = windowHeight - elementMarginBottom - elementOffsetTop;
     // this.log.debug('new MaxHeight: ' + maxHeight);
+    this.maxHeight = maxHeight;
     this.element.style.height = maxHeight + 'px';
     // this.log.debug([windowHeight, elementOffsetTop, elementMarginBottom, footerElementMargin, this.element.style.maxHeight]);
     this.top = elementOffsetTop;
+    this.onHeightChange.next(maxHeight);
   }
 
   private getElementOffsetTop() {

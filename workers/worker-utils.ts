@@ -89,62 +89,67 @@ export function getValAsString(val: any): string {
 }
 
 export async function parseFile(fileData: FileContentsEvent): Promise<FileContentsResponse> {
-  try {
-    const { type, filename } = fileData;
-    let fileContents: string | Buffer;
+  const { type, filename } = fileData;
+  let fileContents: string | Buffer;
 
-    console.time('read file');
-    if (type === 'csv') {
-      fileContents = await fs.readFile(filename, 'utf-8');
-    } else if (type === 'xlsx') {
-      fileContents = await fs.readFile(filename);
+  console.time('read file');
+  if (type === 'csv') {
+    fileContents = await fs.readFile(filename, 'utf-8');
+  } else if (type === 'xlsx') {
+    fileContents = await fs.readFile(filename);
+  } else {
+    fileContents = await fs.readFile(filename, 'utf-8');
+  }
+  console.timeEnd('read file');
+
+  if (type === 'csv') {
+    // CSV
+    console.time('parse csv');
+    const parseResults = parse(fileContents as string, { skipEmptyLines: true, header: true });
+    console.timeEnd('parse csv');
+
+    if (parseResults.errors.length > 0) {
+      console.log('Errors parsing file', parseResults.errors);
+      const errorMessage = parseResults.errors.reduce((message: string, curr) => {
+        if (message.length < 250) {
+          message += `\nRow ${curr.row}: ${curr.message}. `;
+        } else if (!message.endsWith('...')) {
+          message += ' ...';
+        }
+        return message;
+      }, '');
+      throw new Error(errorMessage);
     } else {
-      fileContents = await fs.readFile(filename, 'utf-8');
-    }
-    console.timeEnd('read file');
-
-    if (type === 'csv') {
-      // CSV
-      console.time('parse csv');
-      const parseResults = parse(fileContents as string, { skipEmptyLines: true, header: true });
-      console.timeEnd('parse csv');
-
-      if (parseResults.errors.length > 0) {
-        console.log('Errors parsing file', parseResults.errors);
-      } else {
-        console.log(parseResults.data);
-        return {
-          type: 'csv',
-          headers: parseResults.meta.fields,
-          data: parseResults.data,
-        };
-      }
-    } else if (type === 'xlsx') {
-      // XLSX
-      console.time('parse xlsx');
-      const workbook = XLSX.read(fileContents, { type: 'buffer' });
-      console.timeEnd('parse xlsx');
-
-      console.time('convert xlsx to json');
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
-      const headers = Object.keys(data[0]);
-      console.timeEnd('convert xlsx to json');
-
+      console.log(parseResults.data);
       return {
-        type: 'xlsx',
-        headers,
-        data,
-      };
-    } else {
-      // TEXT
-      return {
-        type: 'text',
-        data: fileContents as string,
+        type: 'csv',
+        headers: parseResults.meta.fields,
+        data: parseResults.data,
       };
     }
-  } catch (ex) {
-    console.log('Error reading file', ex);
+  } else if (type === 'xlsx') {
+    // XLSX
+    console.time('parse xlsx');
+    const workbook = XLSX.read(fileContents, { type: 'buffer' });
+    console.timeEnd('parse xlsx');
+
+    console.time('convert xlsx to json');
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
+    const headers = Object.keys(data[0]);
+    console.timeEnd('convert xlsx to json');
+
+    return {
+      type: 'xlsx',
+      headers,
+      data,
+    };
+  } else {
+    // TEXT
+    return {
+      type: 'text',
+      data: fileContents as string,
+    };
   }
 }
 

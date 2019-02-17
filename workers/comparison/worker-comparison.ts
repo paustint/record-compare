@@ -17,6 +17,7 @@ import {
 import { CHAR_TO_PIXEL_RATIO } from '../../src/app/constants';
 import { getTempFilename, getTempFolderName } from '../worker';
 import { parseFile, writeContentToCsv, getDiffContent, getMaxStringLength, getValAsString } from '../worker-utils';
+import { CsvParseError } from '../worker-errors';
 
 /**
  * Give two tabular files (csv/xlsx), compare files
@@ -30,34 +31,38 @@ export async function parseAndCompare(
   rightFileData: FileContentsEvent,
   options: CompareTableOptions
 ): Promise<MatchRowsOutput> {
+  let left: FileContentsTable;
+  let right: FileContentsTable;
   try {
     console.time('parse both files');
-    const left = (await parseFile(leftFileData)) as FileContentsTable;
-    const right = (await parseFile(rightFileData)) as FileContentsTable;
+    left = (await parseFile(leftFileData)) as FileContentsTable;
+    right = (await parseFile(rightFileData)) as FileContentsTable;
     console.timeEnd('parse both files');
-    try {
-      console.time('compare table data');
-      const bytesPerRow = [];
-      const results = compareTableData(left.data, right.data, options, bytesPerRow);
-      console.timeEnd('compare table data');
-
-      await fs.writeJSON(results.files.bytesPerRow, bytesPerRow);
-
-      const output: MatchRowsOutput = {
-        diffMetadata: results.diffMetadata,
-        colMetadata: results.colMetadata,
-        mapping: options.mapping,
-        files: results.files,
-      };
-      console.log('output', output);
-      return output;
-    } catch (ex) {
-      console.log('Error comparing files', ex);
-      throw new Error('Error comparing files');
-    }
   } catch (ex) {
-    console.log('Error parsing files', ex);
-    throw new Error('Error parsing files');
+    console.log('Error parsing left file', ex);
+    throw new CsvParseError(`${left ? 'Right' : 'Left'} File Parsing Error`, ex.message);
+  }
+
+  // Both files successfully parsed
+  try {
+    console.time('compare table data');
+    const bytesPerRow = [];
+    const results = compareTableData(left.data, right.data, options, bytesPerRow);
+    console.timeEnd('compare table data');
+
+    await fs.writeJSON(results.files.bytesPerRow, bytesPerRow);
+
+    const output: MatchRowsOutput = {
+      diffMetadata: results.diffMetadata,
+      colMetadata: results.colMetadata,
+      mapping: options.mapping,
+      files: results.files,
+    };
+    console.log('output', output);
+    return output;
+  } catch (ex) {
+    console.log('Error comparing files', ex);
+    throw new Error('Error comparing files');
   }
 }
 

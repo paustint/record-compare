@@ -45,7 +45,9 @@ export class CompareSettingsMappingComponent implements OnInit {
     if (this.isInit) {
       this.mappedHeaders = this.mappingService.autoMap(this.leftHeaders, this.rightHeaders);
       this.log.debug('mappedHeaders', this.mappedHeaders);
-      this.mapped.emit(this.mappedHeaders);
+      setTimeout(() => {
+        this.mapped.emit(this.mappedHeaders);
+      });
     }
   }
 

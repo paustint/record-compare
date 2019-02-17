@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from '../../providers/electron.service';
 import { parse } from 'papaparse';
 import { FileContentsEvent, FileType, FileStat } from '../../models';
@@ -19,7 +19,10 @@ export class FileLoaderComponent implements OnInit {
   @Output() fileContents = new EventEmitter<FileContentsEvent>();
   @Input()
   set file(fileEv: FileContentsEvent) {
-    if (fileEv) {
+    // CD was causing this to fire mid-event when loading was set to true
+    // parseInProgress ensures that incoming data is ignored
+    // FIXME: consider how the loading indicator works
+    if (!this.parseInProgress && fileEv) {
       this.fileStat = fileEv.fileStat;
       this.filename = fileEv.filename;
       this.type = fileEv.type;
@@ -30,12 +33,15 @@ export class FileLoaderComponent implements OnInit {
   type: FileType;
   prettySize: string;
   dragOverActive = false;
+  errorMessage: string;
+  parseInProgress = false;
 
   constructor(
     private electronService: ElectronService,
     private log: LogService,
     private appService: AppService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {}
@@ -77,6 +83,8 @@ export class FileLoaderComponent implements OnInit {
   }
 
   private async readFile(filePath: string[]) {
+    this.parseInProgress = true;
+    this.errorMessage = undefined;
     if (filePath && filePath.length > 0) {
       this.filename = filePath[0];
       this.appService.loading = true;
@@ -89,6 +97,14 @@ export class FileLoaderComponent implements OnInit {
         this.appService.loading = false;
       }
     }
+    this.parseInProgress = false;
+  }
+
+  private clearFile() {
+    this.filename = undefined;
+    this.fileStat = undefined;
+    this.type = undefined;
+    this.cd.detectChanges();
   }
 
   private async parseFile(filename: string) {
@@ -112,9 +128,15 @@ export class FileLoaderComponent implements OnInit {
           },
           error: error => {
             this.log.debug('Errors parsing file', error);
+            this.errorMessage = `There was an error reading the file.  Row: ${error.row}, error: ${error.message}`;
+            this.fileContents.emit(undefined);
           },
           complete: () => {
             // never called if preview is set
+            this.log.debug('File contained no data');
+            this.errorMessage = 'The file did not contain any rows';
+            this.clearFile();
+            this.fileContents.emit(undefined);
           },
         });
       } else if (FILETYPE_REGEX.XLSX.test(filename)) {

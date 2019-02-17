@@ -71,19 +71,42 @@ async function compareTableData(
   payload: { left: FileContentsEvent; right: FileContentsEvent; options: CompareTableOptions }
 ) {
   const { left, right, options } = payload;
-  // TODO: Read and parse file here instead of having to pass here and back
-  const matchRowsOutput = await comparison.parseAndCompare(left, right, options);
-  sendRendererMessage({
-    name,
-    payload: matchRowsOutput,
-  });
+  try {
+    const matchRowsOutput = await comparison.parseAndCompare(left, right, options);
+    sendRendererMessage({
+      name,
+      payload: matchRowsOutput,
+    });
+  } catch (ex) {
+    console.log('Exception', ex);
+    sendRendererMessage({
+      name,
+      payload: {},
+      error: {
+        name: ex.name,
+        message: ex.message,
+      },
+    });
+  }
 }
 
 async function exportComparison(name: WorkerEventName, payload: { inputFilename: string; outputFilename: string }) {
-  const exportComparisonTable = new ExportComparisonTableToXlsx(payload.inputFilename, payload.outputFilename);
-  await exportComparisonTable.generateExport();
-  sendRendererMessage({
-    name,
-    payload: {},
-  });
+  try {
+    const exportComparisonTable = new ExportComparisonTableToXlsx(payload.inputFilename, payload.outputFilename);
+    await exportComparisonTable.generateExport();
+    sendRendererMessage({
+      name,
+      payload: {},
+    });
+  } catch (ex) {
+    console.log('Exception', ex);
+    sendRendererMessage({
+      name,
+      payload: {},
+      error: {
+        name: ex.name,
+        message: ex.message,
+      },
+    });
+  }
 }

@@ -52,7 +52,7 @@
     "fs-extra": "^7.0.1",
     "install": "^0.12.2",
     "lodash": "^4.17.11",
-    "ngx-text-diff": "^0.5.3",
+    "ngx-text-diff": "^0.5.4",
     "npm": "^6.7.0",
     "papaparse": "^4.6.3",
     "pretty-bytes": "^5.1.0",

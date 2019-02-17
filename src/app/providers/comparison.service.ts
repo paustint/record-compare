@@ -94,25 +94,40 @@ export class ComparisonService {
     this.appService.loading = true;
     this.resetComparison();
     this.log.time('compare data');
+    try {
+      this.currentCompareResults = await this.electron.sendEventToWorker('COMPARE_TABLE', { left: left, right: right, options });
 
-    this.currentCompareResults = await this.electron.sendEventToWorker('COMPARE_TABLE', { left: left, right: right, options });
+      try {
+        this.pagination.next({
+          ...this._pagination,
+          total: this.currentCompareResults.diffMetadata.matchedRowsCount,
+          totalDiffs: this.currentCompareResults.diffMetadata.rowDiffCount,
+        });
 
-    this.pagination.next({
-      ...this._pagination,
-      total: this.currentCompareResults.diffMetadata.matchedRowsCount,
-      totalDiffs: this.currentCompareResults.diffMetadata.rowDiffCount,
-    });
+        const headers = Object.keys(this.currentCompareResults.mapping).map(key => ({
+          label: key,
+          origLabel: this.currentCompareResults.mapping[key],
+        }));
 
-    const headers = Object.keys(this.currentCompareResults.mapping).map(key => ({
-      label: key,
-      origLabel: this.currentCompareResults.mapping[key],
-    }));
+        this.headers.next(headers);
+        this.currBytesPerRow = await this.electron.readFileAsJson<RowBytes[]>(this.currentCompareResults.files.bytesPerRow);
 
-    this.headers.next(headers);
-    this.currBytesPerRow = await this.electron.readFileAsJson<RowBytes[]>(this.currentCompareResults.files.bytesPerRow);
-    this.log.timeEnd('compare data');
-
-    await this.getRowsFromComparison();
+        await this.getRowsFromComparison();
+      } catch (ex) {
+        // Error reading results
+        this.log.error(ex);
+        this.appService.loading = false;
+        this.resetComparison();
+      }
+    } catch (ex) {
+      // error comparing data
+      this.log.error(ex);
+      this.appService.loading = false;
+      this.appService.onError('COMPARE_TABLE', ex);
+      this.resetComparison();
+    } finally {
+      this.log.timeEnd('compare data');
+    }
   }
 
   /**

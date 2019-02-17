@@ -9,6 +9,8 @@ const serve = args.some(val => val === '--serve');
 
 const GET_WINDOW_IDS_EV = 'GET_WINDOW_IDS';
 const GET_PATH = 'GET_PATH';
+const iconPath = path.join(__dirname, 'assets/icons/png/64x64.png');
+console.log('iconPath:', iconPath);
 
 function createWindow() {
   const electronScreen = screen;
@@ -26,6 +28,7 @@ function createWindow() {
       nodeIntegration: true,
       textAreasAreResizable: false,
     },
+    icon: iconPath,
   });
 
   if (serve) {

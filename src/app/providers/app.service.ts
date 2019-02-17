@@ -1,6 +1,6 @@
-import { Injectable, OnInit } from '@angular/core';
-import { Observable, Subscription, Subject, BehaviorSubject } from 'rxjs';
-import { AppFooterItem } from '../models';
+import { Injectable } from '@angular/core';
+import { Subject, BehaviorSubject } from 'rxjs';
+import { AppFooterItem, WorkerError, WorkerEventName, AppError } from '../models';
 import { LogService } from './log.service';
 
 @Injectable({
@@ -8,6 +8,9 @@ import { LogService } from './log.service';
 })
 export class AppService {
   private _loading: boolean;
+
+  private appError = new Subject<AppError | undefined>();
+  public appError$ = this.appError.asObservable();
 
   private loadingSubject = new Subject<boolean>();
   public loading$ = this.loadingSubject.asObservable();
@@ -29,5 +32,20 @@ export class AppService {
   setFooterItems(items: AppFooterItem[][]) {
     this.log.debug('setFooterItems', items);
     this.footerItems.next(items);
+  }
+
+  onError(name: WorkerEventName, err: WorkerError) {
+    this.appError.next({
+      name,
+      error: {
+        name: err.name,
+        message: err.message,
+        data: err.data,
+      },
+    });
+  }
+
+  clearError() {
+    this.appError.next();
   }
 }
