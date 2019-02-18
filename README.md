@@ -4,6 +4,20 @@
 
 
 ## TODO
+-IMMEDIATE TODO
+  - [x] Create a way for developer tools to be opened in production (maybe?)
+  - [x] Create an About window from the toolbar
+  - [x] Allow right-click to copy/paste into text comparison
+  - [x] ctrl+v does not work on the text comparison!!!
+  - [ ] Angular should not log by default in production (this did not seem like the case when debug was on)
+  - [x] Text compare needs padding/margin
+  - [x] Filesize clears out on tab change!
+  - [x] clear out old stuff on load
+  - [ ] Allow showing helper window in production
+  - [x] Allow enabling logging in production
+  - [x] Meta enter to submit text comparison
+  - [ ] EXAMPLES OF HANDLING STARTUP ERRORS ETC..
+    - [ ] https://github.com/electron/electron/blob/cb9be091aa203f27496b2b8993e10b5c554525c4/default_app/main.js
 - BUGS
   - [x] IF a user loads a new file and clicks compare, we do compare but the UI does not update.
     - [ ] We need to figure out the interaction for these

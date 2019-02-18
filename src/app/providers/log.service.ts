@@ -1,98 +1,74 @@
 // tslint:disable:no-console
-import { Injectable, Optional } from '@angular/core';
-import { environment } from '../environments/environments';
-
-export enum LogLevels {
-  OFF = 0,
-  ERROR = 1,
-  WARN = 2,
-  INFO = 3,
-  DEBUG = 4,
-}
+import { Injectable } from '@angular/core';
+import { AppConfig } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LogService {
-  level: number;
+  private logging: boolean;
 
   constructor() {
-    this.level = environment.logLevel || 0;
+    this.logging = AppConfig.logging || false;
+    this.debug('Logging Enabled:', this.logging);
   }
 
-  private logTime(level: number) {
-    if (level <= this.level) {
-      // only log based on configured level
-      switch (level) {
-        case 4:
-          return console.time.bind(console);
-        // break;
-        default:
-          return function() {};
-      }
+  toggleEnable(enable: boolean) {
+    this.logging = enable;
+  }
+
+  private logTime() {
+    if (this.logging) {
+      return console.time.bind(console);
     } else {
       return function() {};
     }
   }
-  private logTimeEnd(level: number) {
-    if (level <= this.level) {
-      // only log based on configured level
-      switch (level) {
-        case 4:
-          return console.timeEnd.bind(console);
-        // break;
-        default:
-          return function() {};
-      }
+  private logTimeEnd() {
+    if (this.logging) {
+      return console.timeEnd.bind(console);
     } else {
       return function() {};
     }
   }
 
-  private logOutput(level: number) {
-    if (level <= this.level) {
+  private logOutput(which: 'error' | 'warn' | 'debug') {
+    if (this.logging) {
       // only log based on configured level
-      switch (level) {
-        case 1:
+      switch (which) {
+        case 'error': {
           return console.error.bind(console);
-        // break;
-        case 2:
+        }
+        case 'warn': {
           return console.warn.bind(console);
-        // break;
-        case 3:
+        }
+        case 'debug': {
           return console.log.bind(console);
-        case 4:
-          return console.log.bind(console);
-        // break;
-        default:
+        }
+        default: {
           return function() {};
+        }
       }
     } else {
       return function() {};
     }
   }
-  // alias for debug
-  get log() {
-    return this.logOutput(LogLevels.DEBUG);
-  }
+
   get error() {
-    return this.logOutput(LogLevels.ERROR);
+    return this.logOutput('error');
   }
   get warn() {
-    return this.logOutput(LogLevels.WARN);
-  }
-  get info() {
-    return this.logOutput(LogLevels.INFO);
+    return this.logOutput('warn');
   }
   get debug() {
-    return this.logOutput(LogLevels.DEBUG);
+    return this.logOutput('debug');
   }
 
   get time() {
-    return this.logTime(LogLevels.DEBUG);
+    return this.logTime();
   }
 
   get timeEnd() {
-    return this.logTimeEnd(LogLevels.DEBUG);
+    return this.logTimeEnd();
   }
 }

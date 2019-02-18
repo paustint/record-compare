@@ -8,6 +8,7 @@ import { LogService } from '../../providers/log.service';
 import { AppService } from '../../providers/app.service';
 import * as prettyBytes from 'pretty-bytes';
 import { UtilsService } from '../../providers/utils.service';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-file-loader',
@@ -28,8 +29,18 @@ export class FileLoaderComponent implements OnInit {
       this.type = fileEv.type;
     }
   }
+  private _fileStat: FileStat | undefined;
+  set fileStat(fileStat: FileStat | undefined) {
+    if (fileStat && _.isNumber(fileStat.size)) {
+      this.prettySize = prettyBytes(fileStat.size, { locale: this.utils.getLanguage() });
+    }
+    this._fileStat = fileStat;
+  }
+  get fileStat(): FileStat | undefined {
+    return this._fileStat;
+  }
   filename: string;
-  fileStat: FileStat | undefined;
+
   type: FileType;
   prettySize: string;
   dragOverActive = false;
@@ -181,6 +192,5 @@ export class FileLoaderComponent implements OnInit {
       created: fileStat.ctime,
       modified: fileStat.mtime,
     };
-    this.prettySize = prettyBytes(fileStat.size, { locale: this.utils.getLanguage() });
   }
 }

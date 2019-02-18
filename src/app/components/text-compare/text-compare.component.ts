@@ -37,8 +37,13 @@ export class TextCompareComponent implements OnInit, OnDestroy {
     this.compareActive = false;
   }
 
-  compare() {
-    this.compareActive = true;
-    this.numRows = NUM_ROWS_COMAPRE_ACTIVE;
+  compare(ev?: KeyboardEvent) {
+    if (ev) {
+      ev.preventDefault();
+    }
+    if (this.left && this.right) {
+      this.compareActive = true;
+      this.numRows = NUM_ROWS_COMAPRE_ACTIVE;
+    }
   }
 }

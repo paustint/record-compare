@@ -1,3 +1,4 @@
+// tslint:disable:no-console
 import { CompareTableOptions } from '../src/app/models';
 import { ipcRenderer, IpcMessageEvent } from 'electron';
 import * as comparison from './comparison/worker-comparison';
@@ -11,10 +12,13 @@ const WORKER_MESSAGE_EV = 'WORKER_MESSAGE';
 const WORKER_RESPONSE_EV = 'WORKER_RESPONSE';
 const GET_WINDOW_IDS_EV = 'GET_WINDOW_IDS';
 const GET_PATH = 'GET_PATH';
+// 1000 (convert to sec) * (60 sec in min) * (60 min in hour) * 24 (hours in day) * PURGE_OLD_DIR_AFTER_DAYS (days ago)
+const PURGE_OLD_DIR_AFTER_DAYS = 5;
+const SEVEN_DAYS_AGO_MS = 1000 * 60 * 60 * 24 * PURGE_OLD_DIR_AFTER_DAYS;
 
 const config: WorkerConfig = {
   windowIds: ipcRenderer.sendSync(GET_WINDOW_IDS_EV),
-  tempPath: ipcRenderer.sendSync(GET_PATH, 'temp'),
+  tempPath: join(ipcRenderer.sendSync(GET_PATH, 'temp'), 'record-compare'),
   eventMap: {
     COMPARE_TABLE: compareTableData,
     EXPORT_COMPARISON: exportComparison,
@@ -35,7 +39,7 @@ function sendRendererMessage(event: WorkerEvent) {
 
 export function getTempFolderName(): string {
   const folderName = `compare-${String(moment().valueOf())}`;
-  const filename = join(config.tempPath, 'record-compare', folderName);
+  const filename = join(config.tempPath, folderName);
   console.log('temp foldername:', filename);
   fs.ensureDirSync(filename);
   return filename;
@@ -50,16 +54,43 @@ export function getTempFilename(options: { folder?: string; filenamePrefix: stri
     if (folder.startsWith(config.tempPath)) {
       return join(folder, name);
     } else {
-      return join(config.tempPath, 'record-compare', folder, name);
+      return join(config.tempPath, folder, name);
     }
   } else {
-    return join(config.tempPath, 'record-compare', name);
+    return join(config.tempPath, name);
   }
 }
 
-// FIXME: run at load
-function cleanTempFolder() {
-  // TODO: delete files older than some timeperiod
+async function cleanTempFolder() {
+  console.time('cleanTempFolder');
+  const tempFolder = config.tempPath;
+  const deletedFolders: string[] = [];
+  console.log('Deleting old temp folders', tempFolder);
+  try {
+    const tempDirContents = (await fs.readdir(tempFolder)).filter(dirName => !dirName.startsWith('.'));
+    // tslint:disable-next-line:prefer-const
+    for (let dirName of tempDirContents) {
+      const dir = `${tempFolder}/${dirName}`;
+      try {
+        const dirStat = await fs.stat(dir);
+        if (dirStat.isDirectory()) {
+          const now = new Date().getTime();
+          const endTime = new Date(dirStat.birthtime).getTime() + SEVEN_DAYS_AGO_MS;
+          if (now > endTime) {
+            console.log('Deleting temp folder:', dir);
+            await fs.remove(dir);
+            deletedFolders.push(dir);
+          }
+        }
+      } catch (ex) {
+        console.warn('Error deleting folder', dir, ex);
+      }
+    }
+    console.log('Number of folders deleted', deletedFolders.length);
+  } catch (ex) {
+    console.warn('Error clearning up old directories', ex);
+  }
+  console.timeEnd('cleanTempFolder');
 }
 
 /**
@@ -110,3 +141,5 @@ async function exportComparison(name: WorkerEventName, payload: { inputFilename:
     });
   }
 }
+
+cleanTempFolder();

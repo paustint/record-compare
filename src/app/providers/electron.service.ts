@@ -70,6 +70,10 @@ export class ElectronService {
       this.log.debug('IPC Event', data);
       this.workerEvents.next(data);
     });
+    ipcRenderer.on(IPC_EVENT_NAMES.TOGGLE_LOGGING, (event: IpcMessageEvent, enable: boolean) => {
+      this.log.debug('IPC Event - enable logging', enable);
+      this.log.toggleEnable(enable);
+    });
   }
 
   /**

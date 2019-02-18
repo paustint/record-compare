@@ -1,45 +1,40 @@
 {
   "appId": "com.electron.record.compare.app",
-  "productName": "record-compare",
+  "productName": "Record Compare",
   "copyright": "Copyright © year Austin Turner",
   "directories": {
-    "output": "release/"
+    "output": "release/",
+    "buildResources": "resources"
   },
-    "files": [
-        "**/*",
-        "assets/icons/mac/*.*",
-        "assets/icons/png/*.*",
-        "assets/icons/win/*.*",
-        "!**/*.ts",
-        "!*.code-workspace",
-        "!LICENSE.md",
-        "!package.json",
-        "!package-lock.json",
-        "!src/",
-        "!e2e/",
-        "!hooks/",
-        "!angular.json",
-        "!_config.yml",
-        "!karma.conf.js",
-        "!tsconfig.json",
-        "!tslint.json"
-    ],
+  "files": [
+    "**/*",
+    "assets/icons/mac/*.*",
+    "assets/icons/png/*.*",
+    "assets/icons/win/*.*",
+    "!**/*.ts",
+    "!*.code-workspace",
+    "!LICENSE.md",
+    "!package.json",
+    "!package-lock.json",
+    "!src/",
+    "!e2e/",
+    "!hooks/",
+    "!angular.json",
+    "!_config.yml",
+    "!karma.conf.js",
+    "!tsconfig.json",
+    "!tslint.json"
+  ],
   "win": {
-    "icon": "dist",
-    "target": [
-      "portable"
-    ]
+    "icon": "resources/icons/win/icon.ico",
+    "target": ["portable"]
   },
   "mac": {
-    "icon": "dist",
-    "target": [
-      "dmg"
-    ]
+    "icon": "resources/icons/mac/icon.icns",
+    "target": ["dmg"]
   },
   "linux": {
-    "icon": "dist",
-    "target": [
-      "AppImage"
-    ]
+    "icon": "resources/icons/png",
+    "target": ["AppImage"]
   }
 }

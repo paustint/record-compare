@@ -1,35 +1,49 @@
-
 <div class="header">
-
   <div class="p-grid">
-      <div class="p-col mx-2">
-          <button
-            pButton
-            type="button"
-            label="Compare Text"
-            icon="pi pi-file"
-            iconPos="right"
-            [disabled]="!left || !right"
-            (click)="compare()"
-          ></button>
-      </div>
+    <div class="p-col mx-2">
+      <button
+        pButton
+        type="button"
+        label="Compare Text"
+        icon="pi pi-file"
+        iconPos="right"
+        [disabled]="!left || !right"
+        (click)="compare()"
+      ></button>
+    </div>
   </div>
 
-    <div class="p-col file-container">
-      <div class="p-grid">
-        <div class="p-col py-0">
-            <textarea class="compare-text-input" pInputTextarea [(ngModel)]="left" [rows]="numRows" (focus)="textFocus()"></textarea>
-        </div>
-        <div class="p-col py-0">
-            <textarea class="compare-text-input" pInputTextarea [(ngModel)]="right" [rows]="numRows" (focus)="textFocus()"></textarea>
-        </div>
+  <div class="p-col file-container">
+    <div class="p-grid">
+      <div class="p-col py-0">
+        <textarea
+          class="compare-text-input"
+          pInputTextarea
+          [(ngModel)]="left"
+          [rows]="numRows"
+          (focus)="textFocus()"
+          (keydown.meta.Enter)="compare($event)"
+          (keydown.control.Enter)="compare($event)"
+        ></textarea>
+      </div>
+      <div class="p-col py-0">
+        <textarea
+          class="compare-text-input"
+          pInputTextarea
+          [(ngModel)]="right"
+          [rows]="numRows"
+          (focus)="textFocus()"
+          (keydown.meta.Enter)="compare($event)"
+          (keydown.control.Enter)="compare($event)"
+        ></textarea>
       </div>
     </div>
+  </div>
 </div>
 
 <!-- Main Content -->
 <div class="content">
   <div *ngIf="compareActive && left && right" class="compare-text-results">
-      <app-compare-text [left]="left" [right]="right"></app-compare-text>
+    <app-compare-text [left]="left" [right]="right"></app-compare-text>
   </div>
 </div>
