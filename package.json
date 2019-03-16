@@ -1,6 +1,6 @@
 {
   "name": "record-compare",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Record Compare",
   "homepage": "https://github.com/paustint/record-compare",
   "author": {
@@ -36,6 +36,7 @@
     "electron:linux": "npm run build:prod && electron-builder build --linux",
     "electron:windows": "npm run build:prod && electron-builder build --windows",
     "electron:mac": "npm run build:prod && npm run build:workers && electron-builder build --mac",
+    "electron:all": "npm run build:prod && npm run build:workers && npm run electron:mac:only-electron && npm run electron:linux:only-electron && npm run electron:windows:only-electron",
     "electron:linux:only-electron": "electron-builder build --linux",
     "electron:windows:only-electron": "electron-builder build --windows",
     "electron:mac:only-electron": "electron-builder build --mac",
