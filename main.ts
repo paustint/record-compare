@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, IpcMessageEvent } from 'electron';
 import * as url from 'url';
-import { createMainWindow } from './app-base/window-manager';
+import { createMainWindow, createWorkerWindow } from './app-base/window-manager';
 import { setDefaultApplicationMenu } from './app-base/menu';
 
 const windows: { main?: BrowserWindow; worker?: BrowserWindow } = {};
@@ -28,6 +28,19 @@ try {
   app.on('ready', () => {
     createMainWindow(windows);
     setDefaultApplicationMenu(windows);
+    if (windows.main) {
+      windows.main.webContents.on('crashed', ex => {
+        app.relaunch();
+        console.log('App crashed', ex);
+      });
+    }
+    if (windows.worker) {
+      windows.worker.webContents.on('crashed', ex => {
+        windows.worker.close();
+        windows.worker = createWorkerWindow();
+        console.log('Worker crashed', ex);
+      });
+    }
   });
 
   // Quit when all windows are closed.
@@ -41,6 +54,7 @@ try {
 
   // https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
   app.on('web-contents-created', (webContentsEvent, contents) => {
+    contents.on('crashed', err => {});
     contents.on('will-navigate', (event, navigationUrl) => {
       const parsedUrl = new url.URL(navigationUrl);
       if (parsedUrl.origin !== 'http://localhost') {

@@ -97,6 +97,7 @@ export class FileCompareComponent implements OnInit, OnDestroy {
     // TODO: is this the right action?
     this.compareActive = false;
     this.updateDisabledButtons();
+    // this.cd.detectChanges();
   }
 
   async onCompare(compareType: CompareType) {
@@ -144,6 +145,8 @@ export class FileCompareComponent implements OnInit, OnDestroy {
     // ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       if (!this.left || !this.right) {
+        this.log.debug('this.left', this.left);
+        this.log.debug('this.right', this.right);
         this.disableButtons = {
           all: true,
           table: true,

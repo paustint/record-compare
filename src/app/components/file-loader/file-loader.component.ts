@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ElectronService } from '../../providers/electron.service';
 import { parse } from 'papaparse';
 import { FileContentsEvent, FileType, FileStat } from '../../models';
@@ -52,6 +52,7 @@ export class FileLoaderComponent implements OnInit {
     private log: LogService,
     private appService: AppService,
     private utils: UtilsService,
+    private zone: NgZone,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -67,7 +68,7 @@ export class FileLoaderComponent implements OnInit {
     event.stopPropagation();
     event.preventDefault();
   }
-  dropFiles(event: any) {
+  async dropFiles(event: any) {
     this.dragOverActive = false;
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
@@ -79,7 +80,9 @@ export class FileLoaderComponent implements OnInit {
       }
       if (items && items.length > 0) {
         this.log.debug('event.dataTransfer.files', event.dataTransfer.files);
-        this.readFile([event.dataTransfer.files[0].path]);
+        if (event.dataTransfer.files[0]) {
+          this.readFile([event.dataTransfer.files[0].path]);
+        }
       }
     }
     event.stopPropagation();
@@ -119,7 +122,6 @@ export class FileLoaderComponent implements OnInit {
   }
 
   private async parseFile(filename: string) {
-    // FIXME: handle errors - what if empty file, no headers, etc..
     try {
       if (FILETYPE_REGEX.CSV.test(filename)) {
         // CSV

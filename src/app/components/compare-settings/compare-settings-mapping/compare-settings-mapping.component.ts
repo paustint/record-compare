@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CompareSettingsMappingService } from './compare-settings-mapping.service';
-import { LogService } from '../../../providers/log.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MappedHeadingItemRow } from '../../../models';
+import { LogService } from '../../../providers/log.service';
+import { CompareSettingsMappingService } from './compare-settings-mapping.service';
 
 @Component({
   selector: 'app-compare-settings-mapping',

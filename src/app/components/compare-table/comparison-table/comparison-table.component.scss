@@ -4,16 +4,12 @@
   }
 
   .grid-container {
-
-
     .grid-container-col {
       overflow-x: auto;
       overflow-y: auto;
-      margin: 0px 5px
+      margin: 0px 5px;
     }
-
   }
-
 
   .cdk-table {
     border-style: solid;
@@ -22,49 +18,53 @@
 
     .cdk-header-row {
       height: 56px;
+      background: lightgray;
     }
 
     .cdk-row {
       height: 40px;
     }
 
-    .cdk-cell, .cdk-footer-cell, .cdk-header-cell {
+    .cdk-cell,
+    .cdk-footer-cell,
+    .cdk-header-cell {
       padding: 0px 15px;
       border-bottom-width: 1px;
       border-bottom-style: solid;
     }
 
+    .cdk-header-cell {
+      background: lightgray;
+    }
+
     .cdk-column-_-_ {
       min-width: 4rem;
-      background-color: #F7F7F9;
+      background-color: #f7f7f9;
       text-align: center;
       line-height: 2.5rem;
       vertical-align: middle;
     }
-
   }
 
   // .diff {
-    .match {
-      // could be green or white (or let user choose?)
-    }
+  .match {
+    // could be green or white (or let user choose?)
+  }
 
-    .mismatch-add {
-      // could use in future
-    }
-    .mismatch-remove {
-      // could use in future
-    }
+  .mismatch-add {
+    // could use in future
+  }
+  .mismatch-remove {
+    // could use in future
+  }
 
-    .mismatch {
-      background-color: #fdb8c0 !important;
-    }
+  .mismatch {
+    background-color: #fdb8c0 !important;
+  }
 
-    .mismatch-cell {
-      background-color: #fee8e9;
-      // border-color: #e9aeae
-    }
+  .mismatch-cell {
+    background-color: #fee8e9;
+    // border-color: #e9aeae
+  }
   // }
-
-
 }
